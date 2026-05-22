@@ -167,9 +167,6 @@ ADMIN_ID = 6843321125
 
 REQUIRED_CHANNELS = [
     {"name": "Main Channel", "username": "@dlxdropp", "link": "https://t.me/+ARqILQuYOckyMzQ8"},
-    {"name": "Join Chat", "username": None, "link": "https://t.me/+7Zfg_N9p4l00ZmQ0"},
-    {"name": "Update Channel", "username": None, "link": "https://t.me/+bdOREGD0R-YwMzI0"},
-    {"name": "Log Net Channel", "username": None, "link": "https://t.me/+oaQFW5kNm8Q0NTU0"}
 ]
 
 LOG_CHANNEL_ID = -1003613602360   
