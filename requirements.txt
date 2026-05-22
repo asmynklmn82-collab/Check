@@ -1,3 +1,13 @@
-telethon
-aiohttp
-aiofiles
+pyTelegramBotAPI
+requests
+pytz
+httpx
+cloudscraper
+user-agent
+cryptography
+urllib3
+curl-cffi
+beautifulsoup4
+faker
+fake-useragent
+qrcode
