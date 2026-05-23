@@ -1,4 +1,5 @@
 pyTelegramBotAPI
 requests
+requests_toolbelt
 faker
 user-agent
