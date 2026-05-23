@@ -13,10 +13,10 @@ import html
 
 token = '8539098531:AAHizeT66679WvTnwvELRGQ2zN89_4UZ_WY'
 bot = telebot.TeleBot(token, parse_mode="HTML")
-admin = 6052713305
+admin = 6843321125
 myid = ['6843321125']
 admins=['6843321125']
-user_canal = '@wafa4048'
+user_canal = '@arr_cr'
 stop = {}
 user_gateways = {}
 stop_flags = {} 
@@ -37,10 +37,10 @@ def start(message):
     userr = message.from_user.first_name
     username= message.from_user.username
     try:
-        member = bot.get_chat_member('@wafa4048', user_id)
+        member = bot.get_chat_member('@arr_cr', user_id)
         if member.status == 'left':
             markup = types.InlineKeyboardMarkup()
-            btn = types.InlineKeyboardButton('Channel The Bot', url='t.me/wafa4048')
+            btn = types.InlineKeyboardButton('Channel The Bot', url='t.me/arr_cr')
             markup.add(btn)
             bot.send_message(user_id, text="Join the channel to continue.", reply_markup=markup)
             return
@@ -59,11 +59,11 @@ def start(message):
     Yes22 = types.InlineKeyboardButton('𝐻𝑒 𝑠𝑢𝑏𝑚𝑖𝑡𝑡𝑒𝑑 𝑎 𝑛𝑜𝑡𝑒 𝑡𝑜 𝑡ℎ𝑒 𝑏𝑜𝑡 𝑜𝑤𝑛𝑒𝑟', callback_data='yrr')
    
     FRA.add(Yes22)
-    video_url = 'https://t.me/+xxbDXfpnF0kyODBk' 
+    video_url = 'https://t.me/C0CCOCOvjk/9' 
     bot.send_photo(message.chat.id, video_url, caption=IU,parse_mode='HTML', reply_markup=FRA)
     
     
-OWNER_ID = 6843321125
+OWNER_ID = 6052713305
 waiting_users = {}
 reply_mode = {}
 @bot.callback_query_handler(func=lambda call: call.data == 'yrr')
@@ -218,10 +218,10 @@ def Alii4(message):
 	    return 
     user_id = str(message.chat.id)
     try:
-        member = bot.get_chat_member('@wafa4048', user_id)
+        member = bot.get_chat_member('@arr_cr', user_id)
         if member.status == 'left':
             markup = types.InlineKeyboardMarkup()
-            btn = types.InlineKeyboardButton('Channel The Bot', url='t.me/wafa4048')
+            btn = types.InlineKeyboardButton('Channel The Bot', url='t.me/arr_cr')
             markup.add(btn)
             bot.send_message(user_id, text="Join the channel to continue.", reply_markup=markup)
             return
@@ -241,7 +241,7 @@ ID Profal . ON ✅ >> /id
 Cheker Proxies . ON ✅ >> /proxi
 Admin Panel . ON ✅ >> /admin '''
 
-    photo_url = 'https://t.me/+xxbDXfpnF0kyODBk'
+    photo_url = 'https://t.me/C0CCOCOvjk/7'
     bot.send_photo(message.chat.id, photo_url, caption=YTT2,parse_mode='HTML', reply_markup=Atty2)
 
 
@@ -270,10 +270,10 @@ def Alii4(message):
 	    return 
     user_id = str(message.chat.id)
     try:
-        member = bot.get_chat_member('@wafa4048', user_id)
+        member = bot.get_chat_member('@arr_cr', user_id)
         if member.status == 'left':
             markup = types.InlineKeyboardMarkup()
-            btn = types.InlineKeyboardButton('Channel The Bot', url='t.me/wafa4048')
+            btn = types.InlineKeyboardButton('Channel The Bot', url='t.me/arr_cr')
             markup.add(btn)
             bot.send_message(user_id, text="Join the channel to continue.", reply_markup=markup)
             return
@@ -297,7 +297,7 @@ Channel scrap . OFF ❌ >> /scr
 - Exm:
 	/scr [Channel]'''
 
-    photo_url = 'https://t.me/+xxbDXfpnF0kyODBk'
+    photo_url = 'https://t.me/C0CCOCOvjk/5'
     bot.send_photo(message.chat.id, photo_url, caption=YTT2,parse_mode='HTML', reply_markup=Atty2)
 
 
@@ -2217,7 +2217,7 @@ Dead: {dead} ❌
 
     text_content = "\n".join(live_proxies)
 
-    file_name = f'@wafa4048_{message.from_user.id}.txt'
+    file_name = f'@B11HB_{message.from_user.id}.txt'
 
     with open(file_name, "w", encoding="utf-8") as f:
         f.write(text_content)
@@ -2254,7 +2254,7 @@ def admin_menu(message):
     	art = types.InlineKeyboardButton("Order", callback_data= 'oorrtt2')
     	alyy.add(art)
     	Yrr = '[<a href="https://t.me/l">ϟ</a>] Welcome, Admin, To The Command Panel.'
-    	video_url = 'https://t.me/+xxbDXfpnF0kyODBk' 
+    	video_url = 'https://t.me/C0CCOCOvjk/4' 
     	bot.send_video(message.chat.id, video_url, caption=Yrr,parse_mode='HTML', reply_markup=alyy)
     else:
     	bot.send_message(message.chat.id,'You Not Admin ')
