@@ -165,9 +165,7 @@ bot = telebot.TeleBot(TOKEN, threaded=True, num_threads=100)
 
 ADMIN_ID = 6843321125
 
-REQUIRED_CHANNELS = [
-    {"name": "Main Channel", "username": "@dlxdropp", "link": "https://t.me/+ARqILQuYOckyMzQ8"},
-]
+REQUIRED_CHANNELS = []
 
 LOG_CHANNEL_ID = -1003613602360   
 BIN_DATA = {}
@@ -509,11 +507,11 @@ class LogManager:
             mention = f"[{first_name}](tg://user?id={user_id})" if first_name else f"User {user_id}"
             plan_emoji = "👑" if plan != "Free" else "🆓"
             log_msg = f"""
-{plan_emoji}{plan} just signed in to DLXBOT.
+{plan_emoji}{plan} just signed in to WAFA BOT.
 User ➜ {mention} (`{user_id}`)
 Time ➜ {dt.now().strftime('%Y-%m-%d %H:%M:%S')}
 
-Let's make some hits today. ➡️ Open BOT (https://t.me/dlxcheckerbot)
+Let's make some hits today. ➡️ Open BOT (https://t.me/wafa4048)
             """
             self.send_to_channel(log_msg)
         except Exception as e:
@@ -583,7 +581,7 @@ Response ➜ {response}
 Gateway ➜ {gateway}
 Card ➜ `{card[:16]}...`
 ━━━━━━━━
-Hit From ➜ @dlxcheckerbot
+Hit From ➜ @wafa4048
                 """
                 self.send_to_channel(hit_msg)
                 
@@ -1042,8 +1040,8 @@ class OxaPayIntegration:
             "network": network,
             "orderId": order_id,
             "description": f"{plan_name} - {credit_amount} Credits",
-            "callbackUrl": "https://t.me/dlxcheckerbot",
-            "returnUrl": "https://t.me/dlxcheckerbot",
+            "callbackUrl": "https://t.me/wafa4048",
+            "returnUrl": "https://t.me/wafa4048",
             "email": f"user_{user_id}@telegram.user",
             "lifeTime": 15
         }
@@ -1500,28 +1498,7 @@ def get_bin_info(bin_code):
 # KANAL KONTROLÜ
 # ============================================================================
 def check_membership(user_id):
-    cache_key = f"membership:{user_id}"
-    cached = cache.get(cache_key)
-    if cached is not None:
-        return cached
-    
-    try:
-        for channel in REQUIRED_CHANNELS:
-            if channel['username']:
-                try:
-                    member = bot.get_chat_member(channel['username'], user_id)
-                    if member.status not in ['member', 'administrator', 'creator']:
-                        cache.set(cache_key, False, 300)
-                        return False
-                except Exception as e:
-                    logger.error(f"Public channel check error for {channel.get('username')}: {e}")
-                    cache.set(cache_key, False, 300)
-                    return False
-        cache.set(cache_key, True, 300)
-        return True
-    except Exception as e:
-        logger.error(f"Membership check error: {e}")
-        return False
+    return True
 
 def get_channels_markup():
     markup = types.InlineKeyboardMarkup(row_width=1)
@@ -3886,7 +3863,7 @@ Dlx
 {msg_text}
 
 ---
-DLX CHECKER
+WAFA CHECKER
             """
             bot.send_message(target_id, broadcast_msg)
             sent_count += 1
@@ -3908,7 +3885,7 @@ DLX CHECKER
                 pass
     
     bot.edit_message_text(
-        f"DLX CHECKER!\n\n"
+        f"WAFA CHECKER!\n\n"
         f"STATISTICS\n"
         f"• Total users: {len(users)}\n"
         f"• Successful sends: {sent_count}\n"
@@ -3977,7 +3954,7 @@ Country ➜ {bin_info['country']}
     output += f"""
 Time ➜ {elapsed}s
 Checked by ➜ {user_name}
-Bot by ➜ @deluxe_cc
+Bot by ➜ @wafa4048
 """
     
     bot.send_message(chat_id, output)
@@ -4134,7 +4111,7 @@ Country ➜ {bin_info['country']}
         output += f"""
 Time ➜ {elapsed}s
 Checked by ➜ {first_name}
-Bot by ➜ @deluxe_cc
+Bot by ➜ @wafa4048
 """
         
         try:
@@ -4180,7 +4157,7 @@ def show_insufficient_credit(message, user_id):
     
     markup = types.InlineKeyboardMarkup(row_width=2)
     btn1 = types.InlineKeyboardButton("Buy Premium", callback_data="back_to_plans")
-    btn2 = types.InlineKeyboardButton("Support", url="https://t.me/deluxe_cc")
+    btn2 = types.InlineKeyboardButton("Support", url="https://t.me/wafa4048")
     markup.add(btn1, btn2)
     
     bot.send_message(message.chat.id, msg, reply_markup=markup)
@@ -4192,9 +4169,6 @@ def show_insufficient_credit(message, user_id):
 txt_stop_flags = {}
 
 def process_txt_command(message, cmd, gateway_name, auth_func, amount=None):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -4463,9 +4437,6 @@ def start(message):
         bot.reply_to(message, "🚫 You are banned from using this bot!")
         return
     
-    if not check_membership(user_id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     credit_manager.create_user(user_id, message.from_user.username, message.from_user.first_name)
     user_info = credit_manager.get_user_info(user_id)
@@ -4474,9 +4445,9 @@ def start(message):
     log_manager.log_start(user_id, message.from_user.username, message.from_user.first_name, plan)
     
     welcome_msg = """
-Welcome to DlxChecker 👋
+Welcome to Wafa Checker 👋
 
-To get premium on the bot, contact @deluxe_cc
+To get premium on the bot, contact @wafa4048
 
 /premium You can make purchases from within the bot.
     """
@@ -4555,7 +4526,7 @@ def cmd_balance(message):
     
     markup = types.InlineKeyboardMarkup(row_width=2)
     btn1 = types.InlineKeyboardButton("Buy Premium", callback_data="back_to_plans")
-    btn2 = types.InlineKeyboardButton("Support", url="https://t.me/deluxe_cc")
+    btn2 = types.InlineKeyboardButton("Support", url="https://t.me/wafa4048")
     markup.add(btn1, btn2)
     
     bot.send_message(message.chat.id, msg, reply_markup=markup)
@@ -5117,9 +5088,6 @@ Last Updated: {dt.now().strftime('%Y-%m-%d %H:%M:%S')}
 # ============================================================================
 @bot.message_handler(commands=['hit'])
 def cmd_hit(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -5327,9 +5295,6 @@ def admin_callback_handler(call):
 # ============================================================================
 def create_deluxe_handler(amount):
     def handler(message):
-        if not check_membership(message.from_user.id):
-            bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-            return
         
         user_id = message.from_user.id
         if credit_manager.is_banned(user_id):
@@ -5357,9 +5322,6 @@ for amount in range(1, 101):
 
 def create_deluxe_txt_handler(amount):
     def handler(message):
-        if not check_membership(message.from_user.id):
-            bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-            return
         
         user_id = message.from_user.id
         if credit_manager.is_banned(user_id):
@@ -5387,9 +5349,6 @@ for amount in range(1, 101):
 # ============================================================================
 def create_custom_stripe_handler(amount):
     def handler(message):
-        if not check_membership(message.from_user.id):
-            bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-            return
         
         user_id = message.from_user.id
         if credit_manager.is_banned(user_id):
@@ -5413,9 +5372,6 @@ for amount in range(1, 101):
 
 def create_custom_stripe_txt_handler(amount):
     def handler(message):
-        if not check_membership(message.from_user.id):
-            bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-            return
         
         user_id = message.from_user.id
         if credit_manager.is_banned(user_id):
@@ -5435,9 +5391,6 @@ for amount in range(1, 101):
 # ============================================================================
 def create_custom_paypal_handler(amount):
     def handler(message):
-        if not check_membership(message.from_user.id):
-            bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-            return
         
         user_id = message.from_user.id
         if credit_manager.is_banned(user_id):
@@ -5461,9 +5414,6 @@ for amount in range(1, 101):
 
 def create_custom_paypal_txt_handler(amount):
     def handler(message):
-        if not check_membership(message.from_user.id):
-            bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-            return
         
         user_id = message.from_user.id
         if credit_manager.is_banned(user_id):
@@ -5483,9 +5433,6 @@ for amount in range(1, 101):
 # ============================================================================
 def create_custom_shopify_handler(amount):
     def handler(message):
-        if not check_membership(message.from_user.id):
-            bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-            return
         
         user_id = message.from_user.id
         if credit_manager.is_banned(user_id):
@@ -5509,9 +5456,6 @@ for amount in range(1, 101):
 
 def create_custom_shopify_txt_handler(amount):
     def handler(message):
-        if not check_membership(message.from_user.id):
-            bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-            return
         
         user_id = message.from_user.id
         if credit_manager.is_banned(user_id):
@@ -5531,9 +5475,6 @@ for amount in range(1, 101):
 # ============================================================================
 def create_custom_braintree_handler(amount):
     def handler(message):
-        if not check_membership(message.from_user.id):
-            bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-            return
         
         user_id = message.from_user.id
         if credit_manager.is_banned(user_id):
@@ -5557,9 +5498,6 @@ for amount in range(1, 101):
 
 def create_custom_braintree_txt_handler(amount):
     def handler(message):
-        if not check_membership(message.from_user.id):
-            bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-            return
         
         user_id = message.from_user.id
         if credit_manager.is_banned(user_id):
@@ -5579,9 +5517,6 @@ for amount in range(1, 101):
 # ============================================================================
 def create_custom_authorize_handler(amount):
     def handler(message):
-        if not check_membership(message.from_user.id):
-            bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-            return
         
         user_id = message.from_user.id
         if credit_manager.is_banned(user_id):
@@ -5605,9 +5540,6 @@ for amount in range(1, 101):
 
 def create_custom_authorize_txt_handler(amount):
     def handler(message):
-        if not check_membership(message.from_user.id):
-            bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-            return
         
         user_id = message.from_user.id
         if credit_manager.is_banned(user_id):
@@ -5627,9 +5559,6 @@ for amount in range(1, 101):
 # ============================================================================
 @bot.message_handler(commands=['vbv'])
 def cmd_vbv(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -5646,9 +5575,6 @@ def cmd_vbv(message):
 
 @bot.message_handler(commands=['st'])
 def cmd_st(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -5665,9 +5591,6 @@ def cmd_st(message):
 
 @bot.message_handler(commands=['ad'])
 def cmd_ad(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -5684,9 +5607,6 @@ def cmd_ad(message):
 
 @bot.message_handler(commands=['adyenvbv'])
 def cmd_adyenvbv(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -5703,9 +5623,6 @@ def cmd_adyenvbv(message):
 
 @bot.message_handler(commands=['b1'])
 def cmd_b1(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -5722,9 +5639,6 @@ def cmd_b1(message):
 
 @bot.message_handler(commands=['sh'])
 def cmd_sh(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -5741,9 +5655,6 @@ def cmd_sh(message):
 
 @bot.message_handler(commands=['pp'])
 def cmd_pp(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -5760,9 +5671,6 @@ def cmd_pp(message):
 
 @bot.message_handler(commands=['a1'])
 def cmd_a1(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -5779,9 +5687,6 @@ def cmd_a1(message):
 
 @bot.message_handler(commands=['a2'])
 def cmd_a2(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -5798,9 +5703,6 @@ def cmd_a2(message):
 
 @bot.message_handler(commands=['pfa'])
 def cmd_pfa(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -5820,9 +5722,6 @@ def cmd_pfa(message):
 # ============================================================================
 @bot.message_handler(commands=['boc'])
 def cmd_boc(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -5839,9 +5738,6 @@ def cmd_boc(message):
 
 @bot.message_handler(commands=['rs'])
 def cmd_rs(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -5858,9 +5754,6 @@ def cmd_rs(message):
 
 @bot.message_handler(commands=['authnet'])
 def cmd_authnet(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -5880,9 +5773,6 @@ def cmd_authnet(message):
 # ============================================================================
 @bot.message_handler(commands=['kill'])
 def cmd_kill(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -5899,9 +5789,6 @@ def cmd_kill(message):
 
 @bot.message_handler(commands=['stripeauto'])
 def cmd_stripeauto(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -5920,9 +5807,6 @@ def cmd_stripeauto(message):
 
 @bot.message_handler(commands=['shopifyauto'])
 def cmd_shopifyauto(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -5944,9 +5828,6 @@ def cmd_shopifyauto(message):
 # ============================================================================
 @bot.message_handler(commands=['vbvtxt'])
 def cmd_vbvtxt(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -5957,9 +5838,6 @@ def cmd_vbvtxt(message):
 
 @bot.message_handler(commands=['adyenvbvtxt'])
 def cmd_adyenvbvtxt(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -5970,9 +5848,6 @@ def cmd_adyenvbvtxt(message):
 
 @bot.message_handler(commands=['sttxt'])
 def cmd_sttxt(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -5983,9 +5858,6 @@ def cmd_sttxt(message):
 
 @bot.message_handler(commands=['adtxt'])
 def cmd_adtxt(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -5996,9 +5868,6 @@ def cmd_adtxt(message):
 
 @bot.message_handler(commands=['b1txt'])
 def cmd_b1txt(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -6009,9 +5878,6 @@ def cmd_b1txt(message):
 
 @bot.message_handler(commands=['shtxt'])
 def cmd_shtxt(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -6022,9 +5888,6 @@ def cmd_shtxt(message):
 
 @bot.message_handler(commands=['pptxt'])
 def cmd_pptxt(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -6035,9 +5898,6 @@ def cmd_pptxt(message):
 
 @bot.message_handler(commands=['a1txt'])
 def cmd_a1txt(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -6048,9 +5908,6 @@ def cmd_a1txt(message):
 
 @bot.message_handler(commands=['a2txt'])
 def cmd_a2txt(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -6061,9 +5918,6 @@ def cmd_a2txt(message):
 
 @bot.message_handler(commands=['pfatxt'])
 def cmd_pfatxt(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -6074,9 +5928,6 @@ def cmd_pfatxt(message):
 
 @bot.message_handler(commands=['boctxt'])
 def cmd_boctxt(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -6087,9 +5938,6 @@ def cmd_boctxt(message):
 
 @bot.message_handler(commands=['rstxt'])
 def cmd_rstxt(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -6100,9 +5948,6 @@ def cmd_rstxt(message):
 
 @bot.message_handler(commands=['authnettxt'])
 def cmd_authnettxt(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -6116,9 +5961,6 @@ def cmd_authnettxt(message):
 # ============================================================================
 @bot.message_handler(commands=['fake'])
 def cmd_fake(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -6133,7 +5975,7 @@ def cmd_fake(message):
     country_code = args[1].upper()
     
     fake_msg = f"""
-#DlxChk Tools
+#WafaChk Tools
 ━━━━━━━━━━━━━━━━━━━━
 
 ✦ Fake Address
@@ -6153,9 +5995,6 @@ def cmd_fake(message):
 
 @bot.message_handler(commands=['sk'])
 def cmd_sk(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -6171,7 +6010,7 @@ def cmd_sk(message):
     msg = bot.reply_to(message, "Checking Stripe key...")
     
     output = f"""
-#DlxChk Tools
+#WafaChk Tools
 ━━━━━━━━━━━━━━━━━━━━
 
 ✦ SK Key Checker
@@ -6190,9 +6029,6 @@ def cmd_sk(message):
 
 @bot.message_handler(commands=['scr'])
 def cmd_scr(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -6213,7 +6049,7 @@ def cmd_scr(message):
     
     msg = bot.reply_to(message, f"Scraping cards from @{username}...")
     
-    output = f"#DlxChk Tools\n━━━━━━━━━━━━━━━━━━━━\n\n✦ Card Scrapper\n⌭ Format ✅ /scr {username} {limit}\n━━━━━━━━━━━━━━━━━━━━\n\n📊 Scraped 0 cards from @{username}\n\n"
+    output = f"#WafaChk Tools\n━━━━━━━━━━━━━━━━━━━━\n\n✦ Card Scrapper\n⌭ Format ✅ /scr {username} {limit}\n━━━━━━━━━━━━━━━━━━━━\n\n📊 Scraped 0 cards from @{username}\n\n"
     
     try:
         bot.edit_message_text(output, message.chat.id, msg.message_id)
@@ -6222,9 +6058,6 @@ def cmd_scr(message):
 
 @bot.message_handler(commands=['gen'])
 def cmd_gen(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -6255,7 +6088,7 @@ def cmd_gen(message):
         card = f"{bin_prefix}{random.randint(1000000000, 9999999999)}|{random.randint(1,12)}|{random.randint(2025,2030)}|{random.randint(100,999)}"
         cards.append(card)
     
-    output = f"#DlxChk Tools\n━━━━━━━━━━━━━━━━━━━━\n\n✦ CC Generator\n⌭ Format ✅ /gen {bin_prefix} {count}\n━━━━━━━━━━━━━━━━━━━━\n\n📊 Generated {count} cards with BIN {bin_prefix}\n\n" + "\n".join(cards[:20])
+    output = f"#WafaChk Tools\n━━━━━━━━━━━━━━━━━━━━\n\n✦ CC Generator\n⌭ Format ✅ /gen {bin_prefix} {count}\n━━━━━━━━━━━━━━━━━━━━\n\n📊 Generated {count} cards with BIN {bin_prefix}\n\n" + "\n".join(cards[:20])
     
     if len(output) > 4000:
         filename = f"generated_{bin_prefix}_{count}.txt"
@@ -6269,9 +6102,6 @@ def cmd_gen(message):
 
 @bot.message_handler(commands=['gentxt'])
 def cmd_gentxt(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -6313,9 +6143,6 @@ def cmd_gentxt(message):
 
 @bot.message_handler(commands=['addproxy'])
 def cmd_addproxy(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -6339,9 +6166,6 @@ def cmd_addproxy(message):
 
 @bot.message_handler(commands=['totalproxy'])
 def cmd_totalproxy(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -6362,9 +6186,6 @@ def cmd_totalproxy(message):
 
 @bot.message_handler(commands=['bin'])
 def cmd_bin(message):
-    if not check_membership(message.from_user.id):
-        bot.reply_to(message, "🚫 Please join all channels first!", reply_markup=get_channels_markup())
-        return
     
     user_id = message.from_user.id
     if credit_manager.is_banned(user_id):
@@ -6381,7 +6202,7 @@ def cmd_bin(message):
     
     if bin_info:
         output = f"""
-#DlxChk Tools
+#WafaChk Tools
 ━━━━━━━━━━━━━━━━━━━━
 
 ✦ BIN Lookup
@@ -6508,7 +6329,7 @@ def callback_handler(call):
         elif call.data.startswith("gate_deluxe_"):
             page = int(call.data.split("_")[2])
             gateways = get_deluxe_gateways_page(page)
-            msg = f"#DlxChk Deluxe Charge (0.25$-100$)!\n"
+            msg = f"#WafaChk Deluxe Charge (0.25$-100$)!\n"
             msg += "•" * 20 + "\n"
             for gw in gateways:
                 cost = "6" if gw['amount'] <= 50 else "10"
@@ -6530,7 +6351,7 @@ def callback_handler(call):
         elif call.data.startswith("gate_stripe_"):
             page = int(call.data.split("_")[2])
             gateways = get_stripe_gateways_page(page)
-            msg = f"#DlxChk Stripe Charge (1$-100$)!\n"
+            msg = f"#WafaChk Stripe Charge (1$-100$)!\n"
             msg += "•" * 20 + "\n"
             for gw in gateways:
                 cost = "6" if gw['amount'] <= 50 else "10"
@@ -6552,7 +6373,7 @@ def callback_handler(call):
         elif call.data.startswith("gate_shopify_"):
             page = int(call.data.split("_")[2])
             gateways = get_shopify_gateways_page(page)
-            msg = f"#DlxChk Shopify Charge (1$-100$)!\n"
+            msg = f"#WafaChk Shopify Charge (1$-100$)!\n"
             msg += "•" * 20 + "\n"
             for gw in gateways:
                 cost = "6" if gw['amount'] <= 50 else "10"
@@ -6574,7 +6395,7 @@ def callback_handler(call):
         elif call.data.startswith("gate_paypal_"):
             page = int(call.data.split("_")[2])
             gateways = get_paypal_gateways_page(page)
-            msg = f"#DlxChk PayPal Charge (1$-100$)!\n"
+            msg = f"#WafaChk PayPal Charge (1$-100$)!\n"
             msg += "•" * 20 + "\n"
             for gw in gateways:
                 cost = "6" if gw['amount'] <= 50 else "10"
@@ -6596,7 +6417,7 @@ def callback_handler(call):
         elif call.data.startswith("gate_payflow_"):
             page = int(call.data.split("_")[2])
             gateways = get_payflow_gateways_page(page)
-            msg = f"#DlxChk Authorize.net Charge (1$-100$)!\n"
+            msg = f"#WafaChk Authorize.net Charge (1$-100$)!\n"
             msg += "•" * 20 + "\n"
             for gw in gateways:
                 cost = "6" if gw['amount'] <= 50 else "10"
@@ -6618,7 +6439,7 @@ def callback_handler(call):
         elif call.data.startswith("gate_braintree_"):
             page = int(call.data.split("_")[2])
             gateways = get_braintree_gateways_page(page)
-            msg = f"#DlxChk Braintree Charge (1$-100$)!\n"
+            msg = f"#WafaChk Braintree Charge (1$-100$)!\n"
             msg += "•" * 20 + "\n"
             for gw in gateways:
                 cost = "6" if gw['amount'] <= 50 else "10"
@@ -6639,7 +6460,7 @@ def callback_handler(call):
             bot.edit_message_text(msg, call.message.chat.id, call.message.message_id, reply_markup=markup)
         elif call.data == "gate_other":
             msg = """
-#DlxChk Other Gates!
+#WafaChk Other Gates!
 ━━━━━━━━━━━━━━━━━━━━
 
 🕯️ Payflow charge 
@@ -6675,7 +6496,7 @@ Cost: 15 | Status: ON! ✅
             bot.edit_message_text(msg, call.message.chat.id, call.message.message_id, reply_markup=markup)
         elif call.data == "show_gates":
             msg = """
-#DlxChk Gates Auths!
+#WafaChk Gates Auths!
 ━━━━━━━━━━━━━━━━━━━━
 
 🔰 3D Lookup (Stripe)
@@ -6744,7 +6565,7 @@ Cost: 3 | Status: ON! ✅
             bot.edit_message_text(msg, call.message.chat.id, call.message.message_id, reply_markup=markup)
         elif call.data == "show_tools":
             msg = """
-#DlxChk Tools
+#WafaChk Tools
 ━━━━━━━━━━━━━━━━━━━━
 
 ✦ User Information
@@ -6790,7 +6611,7 @@ Cost: 3 | Status: ON! ✅
             bot.edit_message_text(msg, call.message.chat.id, call.message.message_id, reply_markup=markup)
         elif call.data == "show_txt_commands":
             msg = """
-#DlxChk TXT Commands!
+#WafaChk TXT Commands!
 ━━━━━━━━━━━━━━━━━━━━
 
 All commands have TXT versions:
@@ -6823,7 +6644,7 @@ All commands have TXT versions:
             bot.edit_message_text(msg, call.message.chat.id, call.message.message_id, reply_markup=markup)
         elif call.data == "show_auto_cmd":
             msg = """
-#DlxChk Auto Commands!
+#WafaChk Auto Commands!
 ━━━━━━━━━━━━━━━━━━━━
 
 🛒 Shopify Auto - 10 Credits
@@ -6844,9 +6665,9 @@ Use: /kill [card]
             bot.edit_message_text(msg, call.message.chat.id, call.message.message_id, reply_markup=markup)
         elif call.data == "back_to_start":
             welcome_msg = """
-Welcome to DlxChecker 👋
+Welcome to Wafa Checker 👋
 
-To get premium on the bot, contact @deluxe_cc
+To get premium on the bot, contact @wafa4048
 
 /premium You can make purchases from within the bot.
             """
@@ -6881,7 +6702,7 @@ def cmd_buy(message):
 
 def main():
     print("=" * 50)
-    print("🚀 DlxChecker Bot Starting...")
+    print("🚀 Wafa Checker Bot Starting...")
     print(f"🤖 Bot Token: {TOKEN[:10]}...")
     print(f"📊 BIN Records: {len(BIN_DATA)}")
     print(f"📢 Required Channels: {len(REQUIRED_CHANNELS)}")
