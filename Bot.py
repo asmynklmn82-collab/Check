@@ -1222,7 +1222,7 @@ def ali_al2(massege):
 	    'sec-fetch-site': 'cross-site',
 	    'user-agent': user,
 	}
-    ccx = '5557530009409857|08|2028|336'
+    ccx = '4059986126444431|11|30|947'
     ccx=ccx.strip()
     n = ccx.split("|")[0]
     mm = ccx.split("|")[1]
